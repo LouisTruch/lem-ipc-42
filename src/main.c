@@ -2,18 +2,19 @@
 
 int add_player(t_ipc *ipc)
 {
-    ipc->game->nb_player++;
-    ipc->game->player[ipc->game->nb_player - 1].x = 9;
-    ipc->game->player[ipc->game->nb_player - 1].y = 9;
-    ipc->game->player[ipc->game->nb_player - 1].team = 1;
-
     int err;
     if ((err = get_semaphore(ipc)))
         return err;
 
-    sem_operation(ipc->sem.id, DECREMENT);
-    print_board(ipc->game->board);
-    sem_operation(ipc->sem.id, INCREMENT);
+    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
+    if (ipc->game->started)
+    {
+        sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+        return GAME_STARTED;
+    }
+    ipc->game->nb_player++;
+    set_player_spawn(ipc->game);
+    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
 
     return (0);
 }
@@ -24,17 +25,23 @@ int init_game(t_ipc *ipc)
     if ((err = get_semaphore(ipc)))
         return err;
 
-    sem_operation(ipc->sem.id, DECREMENT);
+    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
+    sem_operation(ipc->sem.id, WAITING_START, DECREMENT);
+    ipc->game->started = false;
     ipc->game->nb_player = 1;
-    ipc->game->player[0].x = 2;
-    ipc->game->player[0].y = 2;
-    ipc->game->player[0].team = 0;
-
-    ft_memset(ipc->game->board, 'x', BOARD_SIZE * BOARD_SIZE);
+    ft_memset(ipc->game->board, FREE_TILE, BOARD_SIZE * BOARD_SIZE);
+    set_player_spawn(ipc->game);
+    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    sleep(SECOND_BEFORE_START);
+    // Have to quit if less than 4 players ?
+    // + Choose number of players per team
+    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
+    ipc->game->started = true;
+    set_players_team(ipc);
     print_board(ipc->game->board);
-
-    sem_operation(ipc->sem.id, INCREMENT);
-
+    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    for (size_t i = 0; i < ipc->game->nb_player; i++)
+        sem_operation(ipc->sem.id, WAITING_START, INCREMENT);
     return 0;
 }
 
@@ -65,14 +72,8 @@ int main(int argc, char **argv)
         if ((err = add_player(&ipc)))
             return (err);
     }
-
-    sem_operation(ipc.sem.id, DECREMENT);
-    ft_printf("sleeping..\n");
-#include <unistd.h>
-    sleep(8);
-    ft_printf("waking up..\n");
-
-    sem_operation(ipc.sem.id, INCREMENT);
+    sem_operation(ipc.sem.id, WAITING_START, DECREMENT);
+    ft_printf("game starting\n");
 
     if (destroy_shmem(ipc.shm.id) == IPC_ERROR)
     {

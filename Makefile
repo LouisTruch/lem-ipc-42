@@ -1,6 +1,6 @@
 NAME = lemipc
 
-SRC	= src/main.c src/shared_mem.c src/semaphore.c src/utils.c 
+SRC	= src/main.c src/shared_mem.c src/semaphore.c src/utils.c src/player.c
 
 OBJ	= ${SRC:.c=.o}
 

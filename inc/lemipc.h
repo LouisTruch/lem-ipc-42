@@ -4,21 +4,27 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <sys/ipc.h>
+#include <sys/sem.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
-// #include <semaphore.h>
-// #include <fcntl.h> // sem_open() O_CREAT
-#include <sys/sem.h>
+#include <time.h>   // time()
+#include <unistd.h> // Sleep()
 
 #include "../libft/libft.h"
 
-#define IPC_ERROR (-1)
+#define IPC_ERROR -1
 
-#define FTOK_SHM_FILEPATH (argv[0])
+#define FTOK_SHM_FILEPATH argv[0]
 #define FTOK_SEMAPHORE_PATH "./mySem"
-#define MAX_PLAYER (64)
-#define BOARD_SIZE (10)
+
+#define GAME_STARTED 1
+#define SECOND_BEFORE_START 5
+#define MAX_PLAYER 64
+#define MIN_PLAYER 4
+#define BOARD_SIZE 15
+#define NB_TEAM 2
+#define FREE_TILE 'x'
 
 typedef struct s_player
 {
@@ -29,7 +35,7 @@ typedef struct s_player
 
 typedef struct s_game
 {
-    // char board[BOARD_SIZE][BOARD_SIZE];
+    bool started;
     char board[BOARD_SIZE * BOARD_SIZE];
     size_t nb_player;
     t_player player[MAX_PLAYER];
@@ -69,6 +75,12 @@ typedef enum s_error
     SEMCTL_STAT_ERROR
 } t_error;
 
+typedef enum s_sem_name
+{
+    WAITING_START,
+    GAME_OPERATION,
+} t_sem_name;
+
 typedef enum s_sem_operation
 {
     INCREMENT,
@@ -82,8 +94,12 @@ int destroy_shmem(const int shmid);
 
 // Semaphore
 int get_semaphore(t_ipc *ipc);
-int sem_operation(int semid, int operation);
+int sem_operation(int semid, int sem_num, int operation);
 int destroy_semaphore(int semid);
+
+// Player
+void set_player_spawn(t_game *game);
+void set_players_team(t_ipc *ipc);
 
 // Utils
 key_t get_key_t(const char *filepath);

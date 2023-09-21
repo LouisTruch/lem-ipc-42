@@ -2,9 +2,10 @@
 
 void print_board(const char *board)
 {
-    for (int i = 0; i < BOARD_SIZE; i++)
+    int i, j;
+    for (i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (j = 0; j < BOARD_SIZE; j++)
         {
             ft_printf("%c", *(board + i * BOARD_SIZE + j));
         }

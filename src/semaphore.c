@@ -1,10 +1,10 @@
 #include "../inc/lemipc.h"
 
-int sem_operation(int semid, int operation)
+int sem_operation(int semid, int nsem, int operation)
 {
     struct sembuf sem_op;
     sem_op.sem_op = (operation == INCREMENT) ? 1 : -1;
-    sem_op.sem_num = 0;
+    sem_op.sem_num = nsem;
     sem_op.sem_flg = 0;
     if (semop(semid, &sem_op, 1) == IPC_ERROR)
         return SEMOP_ERROR;
@@ -21,13 +21,18 @@ int get_semaphore(t_ipc *ipc)
 
     errno = 0;
     // No need for file and key ??
-    if ((ipc->sem.id = semget(ipc->sem.key, 1, 0)) == IPC_ERROR)
+    if ((ipc->sem.id = semget(ipc->sem.key, 2, 0)) == IPC_ERROR)
     {
         if (errno == ENOENT)
         {
             // Add protection here ?
-            ipc->sem.id = semget(ipc->sem.key, 1, IPC_CREAT | IPC_EXCL | 0666);
-            if (semctl(ipc->sem.id, 0, SETVAL, 1) == IPC_ERROR)
+            ipc->sem.id = semget(ipc->sem.key, 2, IPC_CREAT | IPC_EXCL | 0666);
+            if (semctl(ipc->sem.id, WAITING_START, SETVAL, 1) == IPC_ERROR)
+            {
+                perror("semctl setvalue");
+                return SEMCTL_SETVAL_ERROR;
+            }
+            if (semctl(ipc->sem.id, GAME_OPERATION, SETVAL, 1) == IPC_ERROR)
             {
                 perror("semctl setvalue");
                 return SEMCTL_SETVAL_ERROR;
