@@ -14,6 +14,7 @@ void set_player_spawn(t_game *game)
     {
         y = random() % BOARD_SIZE;
     } while (line[y] != FREE_TILE);
+    game->board[x * BOARD_SIZE + y] = '0';
     game->player[game->nb_player - 1].x = x;
     game->player[game->nb_player - 1].y = y;
 }
