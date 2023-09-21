@@ -1,6 +1,6 @@
 NAME = lemipc
 
-SRC	= src/main.c
+SRC	= src/main.c src/shared_mem.c src/semaphore.c src/utils.c 
 
 OBJ	= ${SRC:.c=.o}
 
@@ -16,18 +16,18 @@ all : ${NAME}
 
 .c.o : ${CC} ${CFLAGS} -c $ -o ${<:.c=.o}
 
-${NAME} : ${OBJS_MANDATORY}
+${NAME} : ${OBJ}
 	make -C libft
-	${CC} ${CFLAGS} -o ${NAME_MANDATORY} ${OBJS_MANDATORY} ${LIB}
+	${CC} ${CFLAGS} -o ${NAME} ${OBJ} ${LIB}
 
 
 clean :
 	make -C libft clean
-	${RM} ${OBJS_MANDATORY} ${OBJS_BONUS}
+	${RM} ${OBJ}
 
 fclean :
 	make -C libft fclean
-	${RM} ${NAME_MANDATORY} ${OBJS_MANDATORY} ${NAME_BONUS} ${OBJS_BONUS}
+	${RM} ${NAME} ${OBJ}
 
 re : fclean all
 
