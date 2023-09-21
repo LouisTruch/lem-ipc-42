@@ -64,17 +64,17 @@ int main(int argc, char **argv)
         perror("shmctl");
         return (SHMCTL_STAT_ERROR);
     }
-    printf("nb_player: %zu\n", shmid_ds.shm_nattch);
 
     if (!ipc.first_player)
     {
-        ft_printf("Not FP\n");
+        // Need to check for GAME_STARTED
         if ((err = add_player(&ipc)))
             return (err);
     }
     sem_operation(ipc.sem.id, WAITING_START, DECREMENT);
-    ft_printf("game starting\n");
+    // ft_printf("game starting\n");
 
+    // Have to let the last player do the clean up
     if (destroy_shmem(ipc.shm.id) == IPC_ERROR)
     {
         perror("shmctl");

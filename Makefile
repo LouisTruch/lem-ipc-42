@@ -29,6 +29,9 @@ fclean :
 	make -C libft fclean
 	${RM} ${NAME} ${OBJ}
 
+t : ${NAME}
+	bash test.sh
+
 re : fclean all
 
-.PHONY	: all clean fclean re
+.PHONY	: all clean fclean re t
