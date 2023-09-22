@@ -1,3 +1,7 @@
 #!/bin/bash
 
-gnome-terminal -- &./lemipc &./lemipc &./lemipc &./lemipc &./lemipc &./lemipc
+for i in {1..10};
+do
+    ./lemipc&
+done
+./lemipc

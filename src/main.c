@@ -1,48 +1,37 @@
 #include "../inc/lemipc.h"
 
-int add_player(t_ipc *ipc)
+int clean_up_ipcs(t_ipc *ipc)
 {
-    int err;
-    if ((err = get_semaphore(ipc)))
-        return err;
-
-    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
-    if (ipc->game->started)
+    struct shmid_ds shmid_ds;
+    if (get_shmem_stat(ipc->shm.id, &shmid_ds) == IPC_ERROR)
     {
-        sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-        return GAME_STARTED;
+        perror("shmctl");
+        return (SHMCTL_STAT_ERROR);
     }
-    ipc->game->nb_player++;
-    set_player_spawn(ipc->game);
-    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-
-    return (0);
-}
-
-int init_game(t_ipc *ipc)
-{
-    int err;
-    if ((err = get_semaphore(ipc)))
-        return err;
-
     sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
-    sem_operation(ipc->sem.id, WAITING_START, DECREMENT);
-    ipc->game->started = false;
-    ipc->game->nb_player = 1;
-    ft_memset(ipc->game->board, FREE_TILE, BOARD_SIZE * BOARD_SIZE);
-    set_player_spawn(ipc->game);
+    ft_printf("test\n");
+    sleep(1);
     sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-    sleep(SECOND_BEFORE_START);
-    // Have to quit if less than 4 players ?
-    // + Choose number of players per team
-    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
-    ipc->game->started = true;
-    set_players_team(ipc);
-    print_board(ipc->game->board);
-    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-    for (size_t i = 0; i < ipc->game->nb_player; i++)
-        sem_operation(ipc->sem.id, WAITING_START, INCREMENT);
-    return 0;
+    // shmdt(ipc->game);
+    // ft_printf("%i\n", shmid_ds.shm_nattch);
+
+    // if (shmid_ds.shm_nattch > 1)
+    // {
+    // sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    //     return 0;
+    // }
+
+    if (destroy_shmem(ipc->shm.id) == IPC_ERROR)
+    {
+        perror("shmctl");
+        return SHMCTL_RMID_ERROR;
+    }
+    if (destroy_semaphore(ipc->sem.id) == IPC_ERROR)
+    {
+        perror("semctl rmid");
+        return SEMCTL_RM_ERROR;
+    }
+    return SUCCESS;
 }
 
 int main(int argc, char **argv)
@@ -51,41 +40,17 @@ int main(int argc, char **argv)
     int err;
     t_ipc ipc;
     if ((err = init_shmem(FTOK_SHM_FILEPATH, &ipc)))
-        return (err);
+        return err;
     if (ipc.first_player)
     {
         if ((err = init_game(&ipc)))
-            return (err);
+            return err;
     }
-
-    struct shmid_ds shmid_ds;
-    if (get_shmem_stat(ipc.shm.id, &shmid_ds) == IPC_ERROR)
+    else if (!ipc.first_player)
     {
-        perror("shmctl");
-        return (SHMCTL_STAT_ERROR);
-    }
-
-    if (!ipc.first_player)
-    {
-        // Need to check for GAME_STARTED
         if ((err = add_player(&ipc)))
-            return (err);
-    }
-    sem_operation(ipc.sem.id, WAITING_START, DECREMENT);
-    // ft_printf("game starting\n");
-
-    // Have to let the last player do the clean up
-    if (destroy_shmem(ipc.shm.id) == IPC_ERROR)
-    {
-        perror("shmctl");
-        return SHMCTL_RMID_ERROR;
+            return err;
     }
 
-    if (destroy_semaphore(ipc.sem.id) == IPC_ERROR)
-    {
-        perror("semctl rmid");
-        return SEMCTL_RM_ERROR;
-    }
-
-    return EXIT_SUCCESS;
+    return (clean_up_ipcs(&ipc) | EXIT_SUCCESS);
 }

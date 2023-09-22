@@ -2,11 +2,12 @@
 
 int sem_operation(int semid, int nsem, int operation)
 {
-    struct sembuf sem_op;
-    sem_op.sem_op = (operation == INCREMENT) ? 1 : -1;
-    sem_op.sem_num = nsem;
-    sem_op.sem_flg = 0;
-    if (semop(semid, &sem_op, 1) == IPC_ERROR)
+    struct sembuf sem_op[1];
+    sem_op->sem_op = (operation == INCREMENT) ? 1 : -1;
+    // ft_printf("Sem %i\n", sem_op->sem_op);
+    sem_op->sem_num = nsem;
+    sem_op->sem_flg = 0;
+    if (semop(semid, sem_op, 0) == IPC_ERROR)
         return SEMOP_ERROR;
     return 0;
 }
@@ -27,12 +28,20 @@ int get_semaphore(t_ipc *ipc)
         {
             // Add protection here ?
             ipc->sem.id = semget(ipc->sem.key, 2, IPC_CREAT | IPC_EXCL | 0666);
-            if (semctl(ipc->sem.id, WAITING_START, SETVAL, 1) == IPC_ERROR)
+            union semun
+            {
+                int val;
+                struct semid_ds *buf;
+                ushort array[1];
+            } sem_attr;
+            sem_attr.val = 0;
+            if (semctl(ipc->sem.id, WAITING_START, SETVAL, sem_attr) == IPC_ERROR)
             {
                 perror("semctl setvalue");
                 return SEMCTL_SETVAL_ERROR;
             }
-            if (semctl(ipc->sem.id, GAME_OPERATION, SETVAL, 1) == IPC_ERROR)
+            sem_attr.val = 1;
+            if (semctl(ipc->sem.id, GAME_OPERATION, SETVAL, sem_attr) == IPC_ERROR)
             {
                 perror("semctl setvalue");
                 return SEMCTL_SETVAL_ERROR;

@@ -1,5 +1,51 @@
 #include "../inc/lemipc.h"
 
+int init_game(t_ipc *ipc)
+{
+    int err;
+    if ((err = get_semaphore(ipc)))
+        return err;
+
+    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
+    ipc->game->started = false;
+    ipc->game->nb_player = 1;
+    ft_memset(ipc->game->board, FREE_TILE, BOARD_SIZE * BOARD_SIZE);
+    set_player_spawn(ipc->game);
+    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    ft_printf("Waiting for other players...\n");
+    sleep(SECOND_BEFORE_START);
+    // Have to quit if less than 4 players ?
+    // + Choose number of players per team
+    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
+    set_players_team(ipc);
+    print_board(ipc->game->board);
+    ipc->game->started = true;
+    ft_printf("Starting...\n");
+    // for (size_t i = 0; i < ipc->game->nb_player - 1; i++)
+    // sem_operation(ipc->sem.id, WAITING_START, INCREMENT);
+    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    return SUCCESS;
+}
+
+int add_player(t_ipc *ipc)
+{
+    int err;
+    if ((err = get_semaphore(ipc)))
+        return err;
+
+    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
+    if (ipc->game->started)
+    {
+        sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+        return GAME_STARTED;
+    }
+    ipc->game->nb_player++;
+    set_player_spawn(ipc->game);
+    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    // sem_operation(ipc->sem.id, WAITING_START, DECREMENT);
+    return SUCCESS;
+}
+
 void set_player_spawn(t_game *game)
 {
     long x, y;

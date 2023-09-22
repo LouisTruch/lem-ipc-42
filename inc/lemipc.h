@@ -14,12 +14,13 @@
 #include "../libft/libft.h"
 
 #define IPC_ERROR -1
+#define SUCCESS 0
 
 #define FTOK_SHM_FILEPATH argv[0]
 #define FTOK_SEMAPHORE_PATH "./mySem"
 
 #define GAME_STARTED 1
-#define SECOND_BEFORE_START 5
+#define SECOND_BEFORE_START 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
 #define BOARD_SIZE 15
@@ -98,8 +99,10 @@ int sem_operation(int semid, int sem_num, int operation);
 int destroy_semaphore(int semid);
 
 // Player
+int init_game(t_ipc *ipc);
 void set_player_spawn(t_game *game);
 void set_players_team(t_ipc *ipc);
+int add_player(t_ipc *ipc);
 
 // Utils
 key_t get_key_t(const char *filepath);
