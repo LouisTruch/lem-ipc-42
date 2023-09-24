@@ -3,8 +3,8 @@
 int clean_up_ipcs(t_ipc *ipc)
 {
     struct shmid_ds shmid_ds;
-    sem_operation(ipc->sem[GAME_MUTEX], LOCK);
 
+    semaphore_lock(ipc->sem[GAME_MUTEX], LOCK);
     if (get_shmem_stat(ipc->shm, &shmid_ds) == IPC_ERROR)
     {
         perror("shmctl");
@@ -12,10 +12,10 @@ int clean_up_ipcs(t_ipc *ipc)
     }
     if (shmid_ds.shm_nattch > 1)
     {
-        sem_operation(ipc->sem[GAME_MUTEX], UNLOCK);
+        semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
         return 0;
     }
-    sem_operation(ipc->sem[GAME_MUTEX], UNLOCK);
+    semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
 
     if (destroy_shmem(ipc->shm) == IPC_ERROR)
     {
@@ -23,6 +23,11 @@ int clean_up_ipcs(t_ipc *ipc)
         return SHMCTL_RMID_ERROR;
     }
     if (destroy_semaphore(ipc->sem[GAME_MUTEX]) == IPC_ERROR)
+    {
+        perror("semctl rmid");
+        return SEMCTL_RM_ERROR;
+    }
+    if (destroy_semaphore(ipc->sem[WAITING_START]) == IPC_ERROR)
     {
         perror("semctl rmid");
         return SEMCTL_RM_ERROR;
@@ -47,6 +52,7 @@ int main(int argc, char **argv)
         if ((err = add_player(&ipc)))
             return err;
     }
+    start_playing(ipc);
 
-    return (clean_up_ipcs(&ipc) | EXIT_SUCCESS);
+    return (clean_up_ipcs(&ipc) | SUCCESS);
 }

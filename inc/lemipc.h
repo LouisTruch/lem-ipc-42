@@ -21,10 +21,10 @@
 #define SEM_WAITING_GAME_KEY "./mySem1"
 
 #define GAME_STARTED 1
-#define SECOND_BEFORE_START 2
+#define SECOND_BEFORE_START 3
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
-#define BOARD_SIZE 15
+#define BOARD_SIZE 10
 #define NB_TEAM 2
 #define FREE_TILE 'x'
 
@@ -42,18 +42,6 @@ typedef struct s_game
     size_t nb_player;
     t_player player[MAX_PLAYER];
 } t_game;
-
-typedef struct s_shm
-{
-    int id;
-    key_t key;
-} t_shm;
-
-typedef struct s_sem
-{
-    int id;
-    key_t key;
-} t_sem;
 
 typedef struct s_ipc
 {
@@ -96,7 +84,7 @@ int destroy_shmem(const int shmid);
 
 // Semaphore
 int get_sem(int *sem, const char *filepath, const int sem_init_value);
-int sem_operation(int semid, int operation);
+int semaphore_lock(int semid, int operation);
 int destroy_semaphore(int semid);
 
 // Player
