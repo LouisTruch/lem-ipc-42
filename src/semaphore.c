@@ -1,65 +1,57 @@
 #include "../inc/lemipc.h"
 
-int sem_operation(int semid, int nsem, int operation)
+int sem_operation(int semid, int operation)
 {
-    struct sembuf sem_op[1];
-    sem_op->sem_op = (operation == INCREMENT) ? 1 : -1;
-    // ft_printf("Sem %i\n", sem_op->sem_op);
-    sem_op->sem_num = nsem;
-    sem_op->sem_flg = 0;
-    if (semop(semid, sem_op, 0) == IPC_ERROR)
+    struct sembuf sem_op;
+    sem_op.sem_op = (operation == UNLOCK) ? 1 : -1;
+    ft_printf("Sem %i\n", sem_op.sem_op);
+    sem_op.sem_num = 0;
+    sem_op.sem_flg = 0;
+    if (semop(semid, &sem_op, 1) == IPC_ERROR)
         return SEMOP_ERROR;
     return 0;
 }
 
-int get_semaphore(t_ipc *ipc)
+int get_sem(int *sem, const char *filepath, const int sem_init_value)
 {
-    if ((ipc->sem.key = get_key_t(FTOK_SEMAPHORE_PATH)) == IPC_ERROR)
+    key_t key;
+    if ((key = get_key_t(filepath)) == IPC_ERROR)
     {
         perror("ftok sem");
         return FTOK_ERROR;
     }
 
     errno = 0;
-    // No need for file and key ??
-    if ((ipc->sem.id = semget(ipc->sem.key, 2, 0)) == IPC_ERROR)
+    union semun
     {
-        if (errno == ENOENT)
+        int val;
+        struct semid_ds *buf;
+        ushort array[1];
+    } sem_attr;
+    *sem = semget(key, 1, 0666 | IPC_CREAT | IPC_EXCL);
+    if (*sem != IPC_ERROR)
+    {
+        sem_attr.val = sem_init_value;
+        if (semctl(*sem, 0, SETVAL, sem_attr) == IPC_ERROR)
         {
-            // Add protection here ?
-            ipc->sem.id = semget(ipc->sem.key, 2, IPC_CREAT | IPC_EXCL | 0666);
-            union semun
-            {
-                int val;
-                struct semid_ds *buf;
-                ushort array[1];
-            } sem_attr;
-            sem_attr.val = 0;
-            if (semctl(ipc->sem.id, WAITING_START, SETVAL, sem_attr) == IPC_ERROR)
-            {
-                perror("semctl setvalue");
-                return SEMCTL_SETVAL_ERROR;
-            }
-            sem_attr.val = 1;
-            if (semctl(ipc->sem.id, GAME_OPERATION, SETVAL, sem_attr) == IPC_ERROR)
-            {
-                perror("semctl setvalue");
-                return SEMCTL_SETVAL_ERROR;
-            }
-            return 0;
+            perror("semctl setval");
+            return SEMCTL_SETVAL_ERROR;
         }
+    }
+    else if (errno == EEXIST)
+    {
+        *sem = semget(key, 1, 0);
+        if (*sem == IPC_ERROR)
+        {
+            perror("semget");
+            return SEMGET_ERROR;
+        }
+    }
+    else
+    {
         perror("semget");
         return SEMGET_ERROR;
     }
-
-    // This is not working ? Should make it so other players wait for player 1 to semctl on the semaphore
-    // struct semid_ds semid_ds;
-    // if (semctl(ipc->sem.id, 0, IPC_STAT) == IPC_ERROR)
-    // {
-    //     perror("semctl stat");
-    //     return SEMCTL_STAT_ERROR;
-    // }
-    // ft_printf("sem stat %i\n", semid_ds.sem_otime);
     return 0;
 }
 

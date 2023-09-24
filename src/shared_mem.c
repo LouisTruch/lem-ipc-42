@@ -26,20 +26,21 @@ static void *attach_shmem(const int shmid)
 
 int init_shmem(const char *filepath, t_ipc *ipc)
 {
-    if ((ipc->shm.key = get_key_t(filepath)) == IPC_ERROR)
+    key_t key;
+    if ((key = get_key_t(filepath)) == IPC_ERROR)
     {
         perror("ftok shm");
         return (FTOK_ERROR);
     }
 
     // Can change key to nothing here ???? idk
-    if ((ipc->shm.id = get_shmem_block(ipc->shm.key, get_max_size(), &ipc->first_player)) == IPC_ERROR)
+    if ((ipc->shm = get_shmem_block(key, get_max_size(), &ipc->first_player)) == IPC_ERROR)
     {
         perror("shmget");
         return (SHMGET_ERROR);
     }
 
-    if ((ipc->game = attach_shmem(ipc->shm.id)) == (void *)IPC_ERROR)
+    if ((ipc->game = attach_shmem(ipc->shm)) == (void *)IPC_ERROR)
     {
         perror("shmat");
         return (SHMAT_ERROR);

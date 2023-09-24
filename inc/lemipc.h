@@ -17,7 +17,8 @@
 #define SUCCESS 0
 
 #define FTOK_SHM_FILEPATH argv[0]
-#define FTOK_SEMAPHORE_PATH "./mySem"
+#define SEM_GAME_MUTEX_KEY "./mySem"
+#define SEM_WAITING_GAME_KEY "./mySem1"
 
 #define GAME_STARTED 1
 #define SECOND_BEFORE_START 2
@@ -58,8 +59,8 @@ typedef struct s_ipc
 {
     t_game *game;
     bool first_player;
-    t_shm shm;
-    t_sem sem;
+    int shm;
+    int sem[2];
 } t_ipc;
 
 typedef enum s_error
@@ -79,13 +80,13 @@ typedef enum s_error
 typedef enum s_sem_name
 {
     WAITING_START,
-    GAME_OPERATION,
+    GAME_MUTEX,
 } t_sem_name;
 
 typedef enum s_sem_operation
 {
-    INCREMENT,
-    DECREMENT,
+    UNLOCK,
+    LOCK,
 } t_sem_operation;
 
 // Shared memory
@@ -94,8 +95,8 @@ int get_shmem_stat(const int shmid, struct shmid_ds *shmid_ds);
 int destroy_shmem(const int shmid);
 
 // Semaphore
-int get_semaphore(t_ipc *ipc);
-int sem_operation(int semid, int sem_num, int operation);
+int get_sem(int *sem, const char *filepath, const int sem_init_value);
+int sem_operation(int semid, int operation);
 int destroy_semaphore(int semid);
 
 // Player

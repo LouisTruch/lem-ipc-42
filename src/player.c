@@ -3,46 +3,41 @@
 int init_game(t_ipc *ipc)
 {
     int err;
-    if ((err = get_semaphore(ipc)))
+    if ((err = get_sem(&ipc->sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1)))
         return err;
 
-    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
-    ipc->game->started = false;
-    ipc->game->nb_player = 1;
-    ft_memset(ipc->game->board, FREE_TILE, BOARD_SIZE * BOARD_SIZE);
-    set_player_spawn(ipc->game);
-    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-    ft_printf("Waiting for other players...\n");
-    sleep(SECOND_BEFORE_START);
-    // Have to quit if less than 4 players ?
-    // + Choose number of players per team
-    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
-    set_players_team(ipc);
-    print_board(ipc->game->board);
-    ipc->game->started = true;
-    ft_printf("Starting...\n");
-    // for (size_t i = 0; i < ipc->game->nb_player - 1; i++)
-    // sem_operation(ipc->sem.id, WAITING_START, INCREMENT);
-    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
+    // if ((err = get_sem(&ipc->sem[WAITING_START], SEM_GAME_OPE_KEY, 0)))
+    //     return err;
+
+    sem_operation(ipc->sem[GAME_MUTEX], LOCK);
+    ft_printf("Sleeping...\n");
+    sleep(3);
+    ft_printf("Waking up...\n");
+    sem_operation(ipc->sem[GAME_MUTEX], UNLOCK);
     return SUCCESS;
 }
 
 int add_player(t_ipc *ipc)
 {
     int err;
-    if ((err = get_semaphore(ipc)))
+    if ((err = get_sem(&ipc->sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1)))
         return err;
 
-    sem_operation(ipc->sem.id, GAME_OPERATION, DECREMENT);
-    if (ipc->game->started)
-    {
-        sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-        return GAME_STARTED;
-    }
-    ipc->game->nb_player++;
-    set_player_spawn(ipc->game);
-    sem_operation(ipc->sem.id, GAME_OPERATION, INCREMENT);
-    // sem_operation(ipc->sem.id, WAITING_START, DECREMENT);
+    sem_operation(ipc->sem[GAME_MUTEX], LOCK);
+    ft_printf("Sleeping...\n");
+    sleep(3);
+    ft_printf("Waking up...\n");
+    sem_operation(ipc->sem[GAME_MUTEX], UNLOCK);
+    // sem_operation(ipc->sem[GAME_MUTEX].id, LOCK);
+    // if (ipc->game->started)
+    // {
+    //     sem_operation(ipc->sem[GAME_MUTEX].id, UNLOCK);
+    //     return GAME_STARTED;
+    // }
+    // ipc->game->nb_player++;
+    // set_player_spawn(ipc->game);
+    // sem_operation(ipc->sem[GAME_MUTEX].id, UNLOCK);
+    // sem_operation(ipc->sem.id, WAITING_START, LOCK);
     return SUCCESS;
 }
 
