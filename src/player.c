@@ -3,9 +3,9 @@
 int init_game(t_ipc *ipc)
 {
     int err;
-    if ((err = get_sem(&ipc->sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1)))
+    if ((err = init_sem(&ipc->sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1)))
         return err;
-    if ((err = get_sem(&ipc->sem[WAITING_START], SEM_WAITING_GAME_KEY, 0)))
+    if ((err = init_sem(&ipc->sem[WAITING_START], SEM_WAITING_GAME_KEY, 0)))
         return err;
 
     semaphore_lock(ipc->sem[GAME_MUTEX], LOCK);
@@ -22,7 +22,7 @@ int init_game(t_ipc *ipc)
     semaphore_lock(ipc->sem[GAME_MUTEX], LOCK);
     ipc->game->started = true;
     set_players_team(ipc);
-    print_board(ipc->game->board);
+    // print_board(ipc->game->board);
     for (size_t i = 0; i < ipc->game->nb_player - 1; i++)
         semaphore_lock(ipc->sem[WAITING_START], UNLOCK);
 
@@ -33,9 +33,9 @@ int init_game(t_ipc *ipc)
 int add_player(t_ipc *ipc)
 {
     int err;
-    if ((err = get_sem(&ipc->sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1)))
+    if ((err = init_sem(&ipc->sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1)))
         return err;
-    if ((err = get_sem(&ipc->sem[WAITING_START], SEM_WAITING_GAME_KEY, 0)))
+    if ((err = init_sem(&ipc->sem[WAITING_START], SEM_WAITING_GAME_KEY, 0)))
         return err;
 
     semaphore_lock(ipc->sem[GAME_MUTEX], LOCK);
@@ -69,6 +69,7 @@ void set_player_spawn(t_game *game)
     game->board[x * BOARD_SIZE + y] = '0';
     game->player[game->nb_player - 1].x = x;
     game->player[game->nb_player - 1].y = y;
+    game->player[game->nb_player - 1].alive = true;
 }
 
 void set_players_team(t_ipc *ipc)

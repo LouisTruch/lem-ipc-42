@@ -7,6 +7,8 @@ int main(int argc, char **argv)
     t_ipc ipc;
     if ((err = init_shmem(FTOK_SHM_FILEPATH, &ipc)))
         return err;
+    if ((err = init_msq(&ipc.msq)))
+        return err;
     if (ipc.first_player)
     {
         if ((err = init_game(&ipc)))

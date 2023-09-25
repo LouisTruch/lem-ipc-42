@@ -12,7 +12,7 @@ int semaphore_lock(int semid, int operation)
     return 0;
 }
 
-int get_sem(int *sem, const char *filepath, const int sem_init_value)
+int init_sem(int *sem, const char *filepath, const int sem_init_value)
 {
     key_t key;
     if ((key = get_key_t(filepath)) == IPC_ERROR)
@@ -52,7 +52,7 @@ int get_sem(int *sem, const char *filepath, const int sem_init_value)
         perror("semget");
         return SEMGET_ERROR;
     }
-    return 0;
+    return SUCCESS;
 }
 
 int destroy_semaphore(int semid)

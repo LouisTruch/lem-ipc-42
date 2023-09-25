@@ -58,5 +58,11 @@ int clean_up_ipcs(t_ipc *ipc)
         perror("semctl rmid");
         return SEMCTL_RM_ERROR;
     }
+    if (destroy_msq(ipc->msq) == IPC_ERROR) 
+    {
+        perror("msgctl rmid");
+        return MSGCTL_RMID_ERROR;
+
+    }
     return SUCCESS;
 }

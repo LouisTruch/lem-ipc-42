@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-shmid=$(ipcs -m | grep 666 | awk '{print $2}' | head -n 1)
+shmid=$(ipcs -m | grep 666 | grep ltruchel | awk '{print $2}' | head -n 1)
 if [ -n "$shmid" ]; then
     echo "Deleting a Shared Memory block"
     ipcrm -m ${shmid}
@@ -22,4 +22,12 @@ if [ -n "$semid" ]; then
     ipcrm -s ${semid}
 else
     echo "No Semaphore to delete"
+fi
+
+msqid=$(ipcs -q | grep 666 | awk '{print $2}' | head -n 1)
+if [ -n "$msqid" ]; then
+    echo "Deleting a Message Queue"
+    ipcrm -q ${msqid}
+else
+    echo "No Message Queue to delete"
 fi

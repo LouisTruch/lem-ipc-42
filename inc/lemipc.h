@@ -5,6 +5,7 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/msg.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -19,21 +20,24 @@
 #define FTOK_SHM_FILEPATH argv[0]
 #define SEM_GAME_MUTEX_KEY "./mySem"
 #define SEM_WAITING_GAME_KEY "./mySem1"
+#define MSQ_KEY "Makefile"
 
 #define GAME_STARTED 1
-#define SECOND_BEFORE_START 1
+#define SECOND_BEFORE_START 3
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
 #define BOARD_SIZE 10
 #define NB_TEAM 2
 #define FREE_TILE 'x'
+#define GAME_SPEED 1
 
 typedef struct s_player
 {
     size_t x;
     size_t y;
-    size_t team;
+    int team;
+    bool alive;
 } t_player;
 
 typedef struct s_game
@@ -50,8 +54,15 @@ typedef struct s_ipc
     bool first_player;
     int shm;
     int sem[2];
+    int msq;
     int player_id;
 } t_ipc;
+
+typedef struct s_msg
+{
+    long int msg_type;
+    int coord[2];
+} t_msg;
 
 typedef enum s_error
 {
@@ -64,7 +75,9 @@ typedef enum s_error
     SEMCTL_RM_ERROR,
     SEMCTL_SETVAL_ERROR,
     SEMOP_ERROR,
-    SEMCTL_STAT_ERROR
+    SEMCTL_STAT_ERROR,
+    MSGGET_ERROR,
+    MSGCTL_RMID_ERROR
 } t_error;
 
 typedef enum s_sem_name
@@ -85,9 +98,15 @@ int get_shmem_stat(const int shmid, struct shmid_ds *shmid_ds);
 int destroy_shmem(const int shmid);
 
 // Semaphore
-int get_sem(int *sem, const char *filepath, const int sem_init_value);
+int init_sem(int *sem, const char *filepath, const int sem_init_value);
 int semaphore_lock(int semid, int operation);
 int destroy_semaphore(int semid);
+
+// Message queue
+int init_msq(int *msqid);
+void send_msq(int msq, t_msg msg);
+void recv_msq(int msq, t_msg *msg, int team);
+int destroy_msq(int msqid);
 
 // Player
 int init_game(t_ipc *ipc);
