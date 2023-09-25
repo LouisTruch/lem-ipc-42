@@ -4,7 +4,7 @@ int semaphore_lock(int semid, int operation)
 {
     struct sembuf sem_op;
     sem_op.sem_op = (operation == UNLOCK) ? 1 : -1;
-    ft_printf("Sem %i semid%i\n", sem_op.sem_op, semid);
+    // ft_printf("Sem %i semid%i\n", sem_op.sem_op, semid);
     sem_op.sem_num = 0;
     sem_op.sem_flg = 0;
     if (semop(semid, &sem_op, 1) == IPC_ERROR)

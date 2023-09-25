@@ -9,7 +9,9 @@ int init_game(t_ipc *ipc)
         return err;
 
     semaphore_lock(ipc->sem[GAME_MUTEX], LOCK);
+    ft_printf("Initializing game...\n");
     ipc->game->started = false;
+    ipc->player_id = 0;
     ipc->game->nb_player = 1;
     ft_memset(ipc->game->board, FREE_TILE, BOARD_SIZE * BOARD_SIZE);
     set_player_spawn(ipc->game);
@@ -23,8 +25,8 @@ int init_game(t_ipc *ipc)
     print_board(ipc->game->board);
     for (size_t i = 0; i < ipc->game->nb_player - 1; i++)
         semaphore_lock(ipc->sem[WAITING_START], UNLOCK);
-    semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
 
+    semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
     return SUCCESS;
 }
 
@@ -42,6 +44,7 @@ int add_player(t_ipc *ipc)
         semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
         return GAME_STARTED;
     }
+    ipc->player_id = ipc->game->nb_player;
     ipc->game->nb_player++;
     set_player_spawn(ipc->game);
     semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);

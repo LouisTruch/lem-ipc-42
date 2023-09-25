@@ -13,15 +13,16 @@
 
 #include "../libft/libft.h"
 
-#define IPC_ERROR -1
 #define SUCCESS 0
+#define IPC_ERROR -1
 
 #define FTOK_SHM_FILEPATH argv[0]
 #define SEM_GAME_MUTEX_KEY "./mySem"
 #define SEM_WAITING_GAME_KEY "./mySem1"
 
 #define GAME_STARTED 1
-#define SECOND_BEFORE_START 3
+#define SECOND_BEFORE_START 1
+#define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
 #define BOARD_SIZE 10
@@ -49,6 +50,7 @@ typedef struct s_ipc
     bool first_player;
     int shm;
     int sem[2];
+    int player_id;
 } t_ipc;
 
 typedef enum s_error
@@ -93,9 +95,13 @@ void set_player_spawn(t_game *game);
 void set_players_team(t_ipc *ipc);
 int add_player(t_ipc *ipc);
 
+// Game
+void start_game(t_ipc *ipc);
+
 // Utils
 key_t get_key_t(const char *filepath);
 size_t get_max_size(void);
+int clean_up_ipcs(t_ipc *ipc);
 void print_board(const char *board);
 
 #endif
