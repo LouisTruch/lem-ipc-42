@@ -128,7 +128,7 @@ int destroy_semaphore(int semid);
 
 // Message queue
 int init_msq(int *msqid);
-void send_msq(int msq, t_msg msg);
+void send_msq(int msq, t_msg *msg);
 void recv_msq(int msq, t_msg *msg, int team);
 int destroy_msq(int msqid);
 

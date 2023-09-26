@@ -120,13 +120,11 @@ static void set_target(const char *board, int p_coord[2], int t_info[3])
 {
     if (t_info[TEAM] == -1)
     {
-        ft_printf("Setting up new target\n");
         search_new_target(board, p_coord, t_info);
         // check return
     }
     else
     {
-        ft_printf("Searching target\n");
         if (!search_target(board, t_info))
             search_new_target(board, p_coord, t_info);
         // ft_printf("Found target %c at %i %i", t_info[TEAM] + ASCII_OFFSET, t_info[LINE], t_info[ROW]);
@@ -143,6 +141,8 @@ static bool is_tile_free(const char tile)
 static int select_direction(const char *board, const int p_coord[2], const int t_info[3])
 {
     // ft_printf("t:%i %i\n", t_info[LINE], t_info[ROW]);
+    if (t_info[LINE] == -1)
+        return CANT_MOVE;
     if (t_info[LINE] < p_coord[LINE] && is_tile_free(board[BOTTOM_TILE]))
         return UP;
     if (t_info[LINE] > p_coord[LINE] && is_tile_free(board[TOP_TILE]))
@@ -159,10 +159,10 @@ static int select_direction(const char *board, const int p_coord[2], const int t
 static void move_to_target(char *board, int p_coord[2], const int t_info[3])
 {
     int direction = select_direction(board, p_coord, t_info);
-    ft_printf("p:%i %i\n", p_coord[LINE], p_coord[ROW]);
+    // ft_printf("p:%i %i\n", p_coord[LINE], p_coord[ROW]);
     if (direction)
         move_player(board, p_coord, direction);
-    ft_printf("p:%i %i\n", p_coord[LINE], p_coord[ROW]);
+    // ft_printf("p:%i %i\n", p_coord[LINE], p_coord[ROW]);
 }
 
 void start_game(t_ipc *ipc)
@@ -170,23 +170,24 @@ void start_game(t_ipc *ipc)
     t_msg msg;
     msg.msg_type = ipc->player->team;
     ft_memset(&msg.t_info, -1, sizeof(int) * 3);
-    int dest_coord[2];
-    ft_memset(dest_coord, -1, sizeof(int) * 2);
 
-    sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-    ft_printf("Starting game...team:%c\n", ipc->player->team + ASCII_OFFSET);
-    // Check around player if dead or not
-    // if (check_death(&ipc->game->player[ipc->player_id], ipc->game->board) || check_game_end(ipc->game))
-    // {
-    //     leave_game(ipc);
-    //     semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
-    //     exit(0);
-    // }
-    recv_msq(ipc->msqid, &msg, ipc->player->team);
-    set_target(ipc->game->board, ipc->player->coord, msg.t_info);
-    print_board(ipc->game->board);
-    move_to_target(ipc->game->board, ipc->player->coord, msg.t_info);
-    // send target in msq
-    print_board(ipc->game->board);
-    sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+    for (int i = 0; i < 5; i++)
+    {
+        sem_lock(ipc->semid[GAME_MUTEX], LOCK);
+        // ft_printf("Starting game...team:%c\n", ipc->player->team + ASCII_OFFSET);
+        // Check around player if dead or not
+        // if (check_death(&ipc->game->player[ipc->player_id], ipc->game->board) || check_game_end(ipc->game))
+        // {
+        //     leave_game(ipc);
+        //     semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
+        //     exit(0);
+        // }
+        recv_msq(ipc->msqid, &msg, ipc->player->team);
+        set_target(ipc->game->board, ipc->player->coord, msg.t_info);
+        move_to_target(ipc->game->board, ipc->player->coord, msg.t_info);
+        send_msq(ipc->msqid, &msg);
+        print_board(ipc->game->board);
+        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+        sleep(1);
+    }
 }

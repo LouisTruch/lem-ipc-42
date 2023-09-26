@@ -35,7 +35,6 @@ int add_player(t_ipc *ipc)
 
 void move_player(char *board, int p_coord[2], const int direction)
 {
-    ft_printf("direction %i\n", direction);
     switch (direction)
     {
     case UP:

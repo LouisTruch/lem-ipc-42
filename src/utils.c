@@ -3,12 +3,12 @@
 void print_board(const char *board)
 {
     int i, j;
-    ft_printf("---------------\n");
+    // ft_printf("---------------\r");
     for (i = 0; i < BOARD_SIZE; i++)
     {
         for (j = 0; j < BOARD_SIZE; j++)
         {
-            ft_printf("%c", *(board + i * BOARD_SIZE + j));
+            ft_printf("\r%c", *(board + i * BOARD_SIZE + j));
         }
         ft_printf("\n");
     }

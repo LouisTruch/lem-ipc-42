@@ -3,17 +3,17 @@
 void recv_msq(int msqid, t_msg *msg, int team)
 {
     errno = ERRNO_DEFAULT;
-    if (msgrcv(msqid, &msg, sizeof(msg), team, IPC_NOWAIT) == IPC_ERROR)
+    if (msgrcv(msqid, msg, sizeof(t_msg), team, IPC_NOWAIT) == IPC_ERROR)
     {
         perror("msgrcv");
-        return ;
+        return;
     }
 }
 
-void send_msq(int msq, t_msg msg)
+void send_msq(int msq, t_msg *msg)
 {
     errno = ERRNO_DEFAULT;
-    if (msgsnd(msq, &msg, sizeof(msg), 0) == IPC_ERROR)
+    if (msgsnd(msq, msg, sizeof(t_msg), 0) == IPC_ERROR)
     {
         perror("msgsnd");
     }
