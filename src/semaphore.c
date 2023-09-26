@@ -1,10 +1,9 @@
 #include "../inc/lemipc.h"
 
-int semaphore_lock(int semid, int operation)
+int sem_lock(int semid, int operation)
 {
     struct sembuf sem_op;
     sem_op.sem_op = (operation == UNLOCK) ? 1 : -1;
-    // ft_printf("Sem %i semid%i\n", sem_op.sem_op, semid);
     sem_op.sem_num = 0;
     sem_op.sem_flg = 0;
     if (semop(semid, &sem_op, 1) == IPC_ERROR)
@@ -12,7 +11,7 @@ int semaphore_lock(int semid, int operation)
     return 0;
 }
 
-int init_sem(int *sem, const char *filepath, const int sem_init_value)
+static int init_sem(int *sem, const char *filepath, int init_value, bool *first_player)
 {
     key_t key;
     if ((key = get_key_t(filepath)) == IPC_ERROR)
@@ -21,17 +20,19 @@ int init_sem(int *sem, const char *filepath, const int sem_init_value)
         return FTOK_ERROR;
     }
 
-    errno = 0;
+    errno = ERRNO_DEFAULT;
     union semun
     {
         int val;
         struct semid_ds *buf;
         ushort array[1];
     } sem_attr;
+    struct semid_ds semid_ds;
     *sem = semget(key, 1, 0666 | IPC_CREAT | IPC_EXCL);
     if (*sem != IPC_ERROR)
     {
-        sem_attr.val = sem_init_value;
+        *first_player = true;
+        sem_attr.val = init_value;
         if (semctl(*sem, 0, SETVAL, sem_attr) == IPC_ERROR)
         {
             perror("semctl setval");
@@ -40,11 +41,17 @@ int init_sem(int *sem, const char *filepath, const int sem_init_value)
     }
     else if (errno == EEXIST)
     {
+        *first_player = false;
         *sem = semget(key, 1, 0);
         if (*sem == IPC_ERROR)
         {
             perror("semget");
             return SEMGET_ERROR;
+        }
+        // ???
+        while (semid_ds.sem_otime == 0)
+        {
+            usleep(100);
         }
     }
     else
@@ -52,6 +59,16 @@ int init_sem(int *sem, const char *filepath, const int sem_init_value)
         perror("semget");
         return SEMGET_ERROR;
     }
+    return SUCCESS;
+}
+
+int init_sems(int *sem, bool *first_player)
+{
+    int err;
+    if ((err = init_sem(&sem[WAITING_START_MUTEX], SEM_WAITING_GAME_KEY, 0, first_player)))
+        return err;
+    if ((err = init_sem(&sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1, first_player)))
+        return err;
     return SUCCESS;
 }
 

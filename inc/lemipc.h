@@ -16,13 +16,14 @@
 
 #define SUCCESS 0
 #define IPC_ERROR -1
+#define ERRNO_DEFAULT 0
+#define ASCII_OFFSET 48
 
-#define FTOK_SHM_FILEPATH argv[0]
+#define SHM_KEY "./lemipc"
 #define SEM_GAME_MUTEX_KEY "./mySem"
 #define SEM_WAITING_GAME_KEY "./mySem1"
 #define MSQ_KEY "Makefile"
 
-#define GAME_STARTED 1
 #define SECOND_BEFORE_START 3
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
@@ -30,12 +31,24 @@
 #define BOARD_SIZE 10
 #define NB_TEAM 2
 #define FREE_TILE 'x'
-#define GAME_SPEED 1
+#define GAME_SPEED 100
+
+#define CURRENT_TILE (p_coord[LINE] * BOARD_SIZE + p_coord[ROW])
+#define TOP_TILE ((p_coord[LINE] - 1) * BOARD_SIZE + p_coord[ROW])
+#define BOTTOM_TILE ((p_coord[LINE] + 1) * BOARD_SIZE + p_coord[ROW])
+#define LEFT_TILE (p_coord[LINE] * BOARD_SIZE + (p_coord[ROW] - 1))
+#define RIGHT_TILE (p_coord[LINE] * BOARD_SIZE + (p_coord[ROW] + 1))
+
+typedef enum e_coord
+{
+    LINE,
+    ROW,
+    TEAM,
+} t_coord;
 
 typedef struct s_player
 {
-    size_t x;
-    size_t y;
+    int coord[2];
     int team;
     bool alive;
 } t_player;
@@ -44,27 +57,28 @@ typedef struct s_game
 {
     bool started;
     char board[BOARD_SIZE * BOARD_SIZE];
-    size_t nb_player;
-    t_player player[MAX_PLAYER];
+    // size_t nb_player;
+    // t_player player[MAX_PLAYER];
 } t_game;
 
 typedef struct s_ipc
 {
     t_game *game;
     bool first_player;
-    int shm;
-    int sem[2];
-    int msq;
-    int player_id;
+    int shmid;
+    int semid[2];
+    int msqid;
+    //  int player_id;
+    t_player player[1];
 } t_ipc;
 
 typedef struct s_msg
 {
     long int msg_type;
-    int coord[2];
+    int t_info[3];
 } t_msg;
 
-typedef enum s_error
+typedef enum e_error
 {
     FTOK_ERROR = 1,
     SHMGET_ERROR,
@@ -77,29 +91,39 @@ typedef enum s_error
     SEMOP_ERROR,
     SEMCTL_STAT_ERROR,
     MSGGET_ERROR,
-    MSGCTL_RMID_ERROR
+    MSGCTL_RMID_ERROR,
+    GAME_STARTED
 } t_error;
 
-typedef enum s_sem_name
+typedef enum e_sem_name
 {
-    WAITING_START,
+    WAITING_START_MUTEX,
     GAME_MUTEX,
 } t_sem_name;
 
-typedef enum s_sem_operation
+typedef enum e_sem_operation
 {
     UNLOCK,
     LOCK,
 } t_sem_operation;
 
+typedef enum e_direction
+{
+    CANT_MOVE,
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+} t_direction;
+
 // Shared memory
-int init_shmem(const char *filepath, t_ipc *shm_struct);
+int init_shmem(t_ipc *ipc);
 int get_shmem_stat(const int shmid, struct shmid_ds *shmid_ds);
 int destroy_shmem(const int shmid);
 
 // Semaphore
-int init_sem(int *sem, const char *filepath, const int sem_init_value);
-int semaphore_lock(int semid, int operation);
+int init_sems(int *sem, bool *first_player);
+int sem_lock(int semid, int operation);
 int destroy_semaphore(int semid);
 
 // Message queue
@@ -110,9 +134,9 @@ int destroy_msq(int msqid);
 
 // Player
 int init_game(t_ipc *ipc);
-void set_player_spawn(t_game *game);
-void set_players_team(t_ipc *ipc);
 int add_player(t_ipc *ipc);
+void set_player_spawn(t_ipc *ipc);
+void move_player(char *board, int p_coord[2], const int direction);
 
 // Game
 void start_game(t_ipc *ipc);

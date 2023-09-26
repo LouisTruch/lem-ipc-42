@@ -2,7 +2,7 @@
 
 shmid=$(ipcs -m | grep 666 | grep ltruchel | awk '{print $2}' | head -n 1)
 if [ -n "$shmid" ]; then
-    echo "Deleting a Shared Memory block"
+    echo "Deleting a Shared Memory Block"
     ipcrm -m ${shmid}
 else
     echo "No Shared Memory to delete"

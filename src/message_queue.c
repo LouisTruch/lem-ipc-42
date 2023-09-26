@@ -1,17 +1,18 @@
 #include "../inc/lemipc.h"
 
-void recv_msq(int msq, t_msg *msg, int team)
+void recv_msq(int msqid, t_msg *msg, int team)
 {
-    (void)team;
-    if (msgrcv(msq, &msg, sizeof(msg), 1, IPC_NOWAIT) == IPC_ERROR)
+    errno = ERRNO_DEFAULT;
+    if (msgrcv(msqid, &msg, sizeof(msg), team, IPC_NOWAIT) == IPC_ERROR)
     {
         perror("msgrcv");
-        return;
+        return ;
     }
 }
 
 void send_msq(int msq, t_msg msg)
 {
+    errno = ERRNO_DEFAULT;
     if (msgsnd(msq, &msg, sizeof(msg), 0) == IPC_ERROR)
     {
         perror("msgsnd");
@@ -27,7 +28,7 @@ int init_msq(int *msqid)
         return (FTOK_ERROR);
     }
 
-    errno = 0;
+    errno = ERRNO_DEFAULT;
     *msqid = msgget(key, 0666 | IPC_CREAT | IPC_EXCL);
     if (errno == EEXIST)
     {
