@@ -4,14 +4,18 @@ void print_board(const char *board)
 {
     int i, j;
     // ft_printf("---------------\r");
+    ft_printf("\n");
     for (i = 0; i < BOARD_SIZE; i++)
     {
+        for (int z = 0; z <= 79; z++)
+            ft_printf(" ");
         for (j = 0; j < BOARD_SIZE; j++)
         {
-            ft_printf("\r%c", *(board + i * BOARD_SIZE + j));
+            ft_printf("%c", *(board + i * BOARD_SIZE + j));
         }
         ft_printf("\n");
     }
+    ft_printf("\n");
 }
 
 size_t get_max_size(void)

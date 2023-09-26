@@ -5,7 +5,8 @@ void recv_msq(int msqid, t_msg *msg, int team)
     errno = ERRNO_DEFAULT;
     if (msgrcv(msqid, msg, sizeof(t_msg), team, IPC_NOWAIT) == IPC_ERROR)
     {
-        perror("msgrcv");
+        if (errno != ENOMSG)
+            perror("msgrcv");
         return;
     }
 }

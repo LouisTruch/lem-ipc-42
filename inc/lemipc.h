@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <time.h>   // time()
 #include <unistd.h> // Sleep()
+#include <sys/ioctl.h>
 
 #include "../libft/libft.h"
 
@@ -28,10 +29,10 @@
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
-#define BOARD_SIZE 10
-#define NB_TEAM 2
+#define BOARD_SIZE 20
+#define NB_TEAM 5
 #define FREE_TILE 'x'
-#define GAME_SPEED 100
+#define GAME_SPEED 1000000
 
 #define CURRENT_TILE (p_coord[LINE] * BOARD_SIZE + p_coord[ROW])
 #define TOP_TILE ((p_coord[LINE] - 1) * BOARD_SIZE + p_coord[ROW])
@@ -50,15 +51,12 @@ typedef struct s_player
 {
     int coord[2];
     int team;
-    bool alive;
 } t_player;
 
 typedef struct s_game
 {
     bool started;
     char board[BOARD_SIZE * BOARD_SIZE];
-    // size_t nb_player;
-    // t_player player[MAX_PLAYER];
 } t_game;
 
 typedef struct s_ipc
@@ -68,7 +66,6 @@ typedef struct s_ipc
     int shmid;
     int semid[2];
     int msqid;
-    //  int player_id;
     t_player player[1];
 } t_ipc;
 

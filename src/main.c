@@ -2,6 +2,11 @@
 
 int main(int argc, char **argv)
 {
+    struct winsize w;
+    if (!ioctl(STDOUT_FILENO, TIOCGWINSZ, &w))
+    {
+        ft_printf("Terminal info col:%i row:%i\n", w.ws_col, w.ws_row);
+    }
     if (argc > 2)
     {
         ft_putstr_fd("Format is : ./lemipc [team-number (optional)]", STDERR_FILENO);

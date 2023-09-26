@@ -26,40 +26,51 @@ int init_game(t_ipc *ipc)
     return SUCCESS;
 }
 
-static bool check_death(t_player *player, const char *board)
+static void leave_game(t_game *game, int p_coord[2])
 {
-    return false;
-    // int x = player->x;
-    // int y = player->y;
-    // int nb_opponent = 0;
-    // for (int i = x - 1; i <= x + 1; i++)
-    // {
-    //     for (int j = y - 1; j <= y + 1; j++)
-    //     {
-    //         if (i >= 0 && i < BOARD_SIZE && j >= 0 && j < BOARD_SIZE)
-    //         {
-    //             if (board[i * BOARD_SIZE + j] != FREE_TILE && board[i * BOARD_SIZE + j] != (int)player->team + '0')
-    //                 nb_opponent++;
-    //         }
-    //     }
-    // }
-    // if (nb_opponent >= NB_OPPONENT_TO_DIE)
-    //     player->alive = false;
-    // return (nb_opponent & NB_OPPONENT_TO_DIE);
+    game->board[CURRENT_TILE] = FREE_TILE;
+    shmdt(game);
 }
 
-static bool check_game_end(const t_game *game)
+static bool check_player_death(t_player *player, const char *board)
 {
-    // int team = -1;
-    // for (size_t i = 0; i < game->nb_player; i++)
-    // {
-    //     if (game->player[i].alive)
-    //     {
-    //         if (team != game->player[i].team && team != -1)
-    //             return true;
-    //         team = game->player[i].team;
-    //     }
-    // }
+    char p_team = player->team + ASCII_OFFSET;
+    int nb_ennemies[NB_TEAM] = {0};
+    for (int line = player->coord[LINE] - 1; line <= player->coord[LINE] + 1; line++)
+    {
+        for (int row = player->coord[ROW] - 1; row <= player->coord[ROW] + 1; row++)
+        {
+            if (line >= 0 && line < BOARD_SIZE && row >= 0 && row < BOARD_SIZE)
+            {
+                if (board[line * BOARD_SIZE + row] != FREE_TILE && board[line * BOARD_SIZE + row] != p_team)
+                {
+                    // Bon...
+                    nb_ennemies[board[line * BOARD_SIZE + row] - ASCII_OFFSET]++;
+                    if (nb_ennemies[board[line * BOARD_SIZE + row] - ASCII_OFFSET]++ >= NB_OPPONENT_TO_DIE)
+                        return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+static bool check_game_end(const char *board, const int team)
+{
+    int nb_player = 0;
+    int p_team = team;
+    for (int i = 0; board[i]; i++)
+    {
+        if (board[i] != FREE_TILE)
+        {
+            nb_player++;
+            if (board[i] != p_team + ASCII_OFFSET)
+                p_team++;
+        }
+    }
+    if (nb_player <= 2 || p_team == team)
+        return true;
     return false;
 }
 
@@ -171,23 +182,25 @@ void start_game(t_ipc *ipc)
     msg.msg_type = ipc->player->team;
     ft_memset(&msg.t_info, -1, sizeof(int) * 3);
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 10; i++)
     {
         sem_lock(ipc->semid[GAME_MUTEX], LOCK);
         // ft_printf("Starting game...team:%c\n", ipc->player->team + ASCII_OFFSET);
         // Check around player if dead or not
-        // if (check_death(&ipc->game->player[ipc->player_id], ipc->game->board) || check_game_end(ipc->game))
-        // {
-        //     leave_game(ipc);
-        //     semaphore_lock(ipc->sem[GAME_MUTEX], UNLOCK);
-        //     exit(0);
-        // }
+        if (check_player_death(ipc->player, ipc->game->board) || check_game_end(ipc->game->board, ipc->player->team))
+        {
+            ft_printf("Leaving game\n");
+            leave_game(ipc->game, ipc->player->coord);
+            // Change exit value
+            sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+            exit(0);
+        }
         recv_msq(ipc->msqid, &msg, ipc->player->team);
         set_target(ipc->game->board, ipc->player->coord, msg.t_info);
         move_to_target(ipc->game->board, ipc->player->coord, msg.t_info);
         send_msq(ipc->msqid, &msg);
         print_board(ipc->game->board);
         sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-        sleep(1);
+        usleep(GAME_SPEED);
     }
 }
