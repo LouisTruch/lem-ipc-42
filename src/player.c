@@ -1,19 +1,45 @@
 #include "../inc/lemipc.h"
 
+int ft_count_char(const char *line, const char c)
+{
+    int count = 0;
+    for (int i = 0; line[i]; i++)
+    {
+        if (line[i] == c)
+            count++;
+    }
+    ft_printf("line'%s' char %c count %i\n", line, c, count);
+    return count;
+}
+
+#include <fcntl.h>
+
 void set_player_spawn(t_ipc *ipc)
 {
+    int n;
     long line, row;
     char complete_line[BOARD_SIZE + 1] = {0};
+    srand(time(NULL));
+    int fd = open("/dev/random", O_RDONLY);
+    char buff[1];
     do
     {
-        srandom(time(NULL));
-        line = random() % BOARD_SIZE;
+        // while ((n = rand() % BOARD_SIZE) > BOARD_SIZE)
+        // ;
+        // line = n;
+        read(fd, buff, 1);
+        // Check open/read/close return...
+        line = buff[0] % BOARD_SIZE;
+
         ft_memcpy(complete_line, &(ipc->game->board[line * BOARD_SIZE]), BOARD_SIZE);
     } while (!ft_strchr(complete_line, FREE_TILE));
     do
     {
-        row = random() % BOARD_SIZE;
+        // row = rand() % BOARD_SIZE;
+        read(fd, buff, 1);
+        row = buff[0] % BOARD_SIZE;
     } while (complete_line[row] != FREE_TILE);
+    close(fd);
     ipc->game->board[line * BOARD_SIZE + row] = ipc->player->team + ASCII_OFFSET;
     ipc->player->coord[LINE] = line;
     ipc->player->coord[ROW] = row;

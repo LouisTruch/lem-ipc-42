@@ -7,8 +7,8 @@ void print_board(const char *board)
     ft_printf("\n");
     for (i = 0; i < BOARD_SIZE; i++)
     {
-        for (int z = 0; z <= 79; z++)
-            ft_printf(" ");
+        // for (int z = 0; z <= 79; z++)
+        //     ft_printf(" ");
         for (j = 0; j < BOARD_SIZE; j++)
         {
             ft_printf("%c", *(board + i * BOARD_SIZE + j));

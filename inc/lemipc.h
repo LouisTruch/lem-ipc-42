@@ -29,7 +29,7 @@
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
-#define BOARD_SIZE 20
+#define BOARD_SIZE 10
 #define NB_TEAM 5
 #define FREE_TILE 'x'
 #define GAME_SPEED 100000

@@ -107,7 +107,6 @@ static bool search_new_target(const char *board, int p_coord[2], int t_info[3])
 static bool search_target(const char *board, int t_info[3])
 {
     // ...
-    ft_printf("search_target\n");
     for (int sqr_size = 1; sqr_size <= (BOARD_SIZE + 1) * 2; sqr_size++)
     {
         for (int line = t_info[LINE] - sqr_size; line <= t_info[LINE] + sqr_size; line++)
@@ -184,22 +183,22 @@ void start_game(t_ipc *ipc)
         sem_lock(ipc->semid[GAME_MUTEX], LOCK);
         // ft_printf("Starting game...team:%c\n", ipc->player->team + ASCII_OFFSET);
         // Check around player if dead or not
-        if (check_player_death(ipc->player, ipc->game->board) || check_game_end(ipc->game->board, ipc->player->team))
-        {
-            ft_printf("Leaving game\n");
-            leave_game(ipc->game, ipc->player->coord);
-            // Change exit value
-            sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-            exit(0);
-        }
-        ft_printf("recv_msg %i me=%c\n", i, ipc->player->team + ASCII_OFFSET);
+        // if (check_player_death(ipc->player, ipc->game->board) || check_game_end(ipc->game->board, ipc->player->team))
+        // {
+        //     ft_printf("Leaving game\n");
+        //     leave_game(ipc->game, ipc->player->coord);
+        //     // Change exit value
+        //     sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+        //     exit(0);
+        // }
+        ft_printf("recv_msg me=%c i=%i\n", ipc->player->team + ASCII_OFFSET, i);
         recv_msq(ipc->msqid, &msg, ipc->player->team);
-        ft_printf("set_target\n");
+        ft_printf("set_target t%i t%i\n", msg.t_info[0], msg.t_info[1]);
         set_target(ipc->game->board, ipc->player->coord, msg.t_info);
         ft_printf("move_to_target\n");
         move_to_target(ipc->game->board, ipc->player->coord, msg.t_info);
-        ft_printf("send_msg\n");
-        send_msq(ipc->msqid, &msg);
+        // ft_printf("send_msg\n");
+        // send_msq(ipc->msqid, &msg);
         sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
         usleep(GAME_SPEED);
     }
