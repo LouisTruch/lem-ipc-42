@@ -25,14 +25,14 @@
 #define SEM_WAITING_GAME_KEY "./mySem1"
 #define MSQ_KEY "Makefile"
 
-#define SECOND_BEFORE_START 3
+#define SECOND_BEFORE_START 2
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
 #define BOARD_SIZE 20
 #define NB_TEAM 5
 #define FREE_TILE 'x'
-#define GAME_SPEED 1000000
+#define GAME_SPEED 100000
 
 #define CURRENT_TILE (p_coord[LINE] * BOARD_SIZE + p_coord[ROW])
 #define TOP_TILE ((p_coord[LINE] - 1) * BOARD_SIZE + p_coord[ROW])
@@ -137,11 +137,13 @@ void move_player(char *board, int p_coord[2], const int direction);
 
 // Game
 void start_game(t_ipc *ipc);
+void start_spectating(t_ipc *ipc);
 
 // Utils
 key_t get_key_t(const char *filepath);
 size_t get_max_size(void);
 int clean_up_ipcs(t_ipc *ipc);
+bool is_tile_free(const char tile);
 void print_board(const char *board);
 
 #endif

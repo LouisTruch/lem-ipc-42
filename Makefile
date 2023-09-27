@@ -30,6 +30,7 @@ fclean :
 	${RM} ${NAME} ${OBJ}
 
 r : ${NAME}
+	clear
 	bash run.sh
 
 re : fclean all

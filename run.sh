@@ -1,16 +1,13 @@
 #!/usr/bin/bash
 
-nb_player=3
-for i in {1..${nb_player}};
+for i in {1..1};
 do
+    ./lemipc 0&
     ./lemipc 1&
-done
-for i in {1..${nb_player}};
-do
     ./lemipc 2&
-done
-for i in {1..${nb_player}};
-do
     ./lemipc 3&
+    ./lemipc 4&
+    # ./lemipc 3&
+    # ./lemipc 4&
 done
-./lemipc 1
+./lemipc

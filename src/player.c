@@ -4,9 +4,9 @@ void set_player_spawn(t_ipc *ipc)
 {
     long line, row;
     char complete_line[BOARD_SIZE + 1] = {0};
-    srandom(time(NULL));
     do
     {
+        srandom(time(NULL));
         line = random() % BOARD_SIZE;
         ft_memcpy(complete_line, &(ipc->game->board[line * BOARD_SIZE]), BOARD_SIZE);
     } while (!ft_strchr(complete_line, FREE_TILE));

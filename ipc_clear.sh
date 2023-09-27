@@ -1,5 +1,9 @@
 #!/usr/bin/bash
 
+if (killall lemipc); then
+    echo "Killing lemipc proccess"
+fi
+
 shmid=$(ipcs -m | grep 666 | grep ltruchel | awk '{print $2}' | head -n 1)
 if [ -n "$shmid" ]; then
     echo "Deleting a Shared Memory Block"

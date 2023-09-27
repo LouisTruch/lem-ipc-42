@@ -27,7 +27,7 @@ static int init_sem(int *sem, const char *filepath, int init_value, bool *first_
         struct semid_ds *buf;
         ushort array[1];
     } sem_attr;
-    struct semid_ds semid_ds;
+    // struct semid_ds semid_ds;
     *sem = semget(key, 1, 0666 | IPC_CREAT | IPC_EXCL);
     if (*sem != IPC_ERROR)
     {
@@ -49,10 +49,10 @@ static int init_sem(int *sem, const char *filepath, int init_value, bool *first_
             return SEMGET_ERROR;
         }
         // ???
-        while (semid_ds.sem_otime == 0)
-        {
-            usleep(100);
-        }
+        // while (semid_ds.sem_otime == 0)
+        // {
+        //     usleep(100);
+        // }
     }
     else
     {
