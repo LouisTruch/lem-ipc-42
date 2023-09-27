@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     ipc.player->team = parse_arg(argv[1]);
     if (ipc.player->team <= 0 || ipc.player->team > NB_TEAM)
     {
-        ft_printf("Team number must be between 0 and %i\n", NB_TEAM);
+        ft_printf("Team number must be between 1 and %i\n", NB_TEAM);
         return EXIT_FAILURE;
     }
 

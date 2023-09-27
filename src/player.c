@@ -1,22 +1,7 @@
 #include "../inc/lemipc.h"
 
-int ft_count_char(const char *line, const char c)
-{
-    int count = 0;
-    for (int i = 0; line[i]; i++)
-    {
-        if (line[i] == c)
-            count++;
-    }
-    ft_printf("line'%s' char %c count %i\n", line, c, count);
-    return count;
-}
-
-#include <fcntl.h>
-
 void set_player_spawn(t_ipc *ipc)
 {
-    int n;
     long line, row;
     char complete_line[BOARD_SIZE + 1] = {0};
     srand(time(NULL));
@@ -24,9 +9,6 @@ void set_player_spawn(t_ipc *ipc)
     char buff[1];
     do
     {
-        // while ((n = rand() % BOARD_SIZE) > BOARD_SIZE)
-        // ;
-        // line = n;
         read(fd, buff, 1);
         // Check open/read/close return...
         line = buff[0] % BOARD_SIZE;
@@ -35,7 +17,6 @@ void set_player_spawn(t_ipc *ipc)
     } while (!ft_strchr(complete_line, FREE_TILE));
     do
     {
-        // row = rand() % BOARD_SIZE;
         read(fd, buff, 1);
         row = buff[0] % BOARD_SIZE;
     } while (complete_line[row] != FREE_TILE);

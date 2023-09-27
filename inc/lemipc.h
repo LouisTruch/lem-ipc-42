@@ -12,6 +12,7 @@
 #include <time.h>   // time()
 #include <unistd.h> // Sleep()
 #include <sys/ioctl.h>
+#include <fcntl.h> // open()...
 
 #include "../libft/libft.h"
 
@@ -25,7 +26,7 @@
 #define SEM_WAITING_GAME_KEY "./mySem1"
 #define MSQ_KEY "Makefile"
 
-#define SECOND_BEFORE_START 2
+#define SECOND_BEFORE_START 3
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
