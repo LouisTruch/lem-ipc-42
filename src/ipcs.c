@@ -7,7 +7,12 @@ void init_ipcs(t_ipc *ipc)
         exit(err);
     if ((err = init_shmem(ipc)))
         exit(err);
-    if ((err = init_msq(&ipc->msqid)))
+    if ((err = init_msq(&ipc->msqid[PLAY], MSQ_KEY)))
+    {
+        shmdt(ipc->game);
+        exit(err);
+    }
+    if ((err = init_msq(&ipc->msqid[SPECT], MSQ_SPECTATE_KEY)))
     {
         shmdt(ipc->game);
         exit(err);
@@ -53,7 +58,7 @@ int clean_up_ipcs(t_ipc *ipc)
         perror("semctl rmid");
         err = SEMCTL_RM_ERROR;
     }
-    if (destroy_msq(ipc->msqid) == IPC_ERROR)
+    if (destroy_msq(ipc->msqid[PLAY]) == IPC_ERROR)
     {
         perror("msgctl rmid");
         err = MSGCTL_RMID_ERROR;

@@ -3,6 +3,7 @@
         "types.h": "c",
         "stdbool.h": "c",
         "lemipc.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "ipc.h": "c"
     }
 }

@@ -19,10 +19,10 @@ void recv_msq(int msqid, t_msg *msg, long team)
     }
 }
 
-int init_msq(int *msqid)
+int init_msq(int *msqid, const char *filepath)
 {
     key_t key;
-    if ((key = get_key_t(MSQ_KEY)) == IPC_ERROR)
+    if ((key = get_key_t(filepath)) == IPC_ERROR)
     {
         perror("ftok msq");
         return (FTOK_ERROR);

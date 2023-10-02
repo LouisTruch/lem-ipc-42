@@ -2,11 +2,16 @@
 
 for i in {1..2};
 do
-    sleep 0.1
     ./lemipc 1&
     ./lemipc 2&
+    ./lemipc 3&
+    # ./lemipc 4&i
     # ./lemipc 5&
-    # ./lemipc 3&
-    # ./lemipc 4&
+    # ./lemipc 6&
+    # ./lemipc 7&
+    # ./lemipc 8&
+    # ./lemipc 9&
 done
-./lemipc
+sleep 0.5
+./lemipc-visualizer
+# ./lemipc

@@ -42,11 +42,6 @@ void print_board(const char *board)
     ft_printf("%s\n", top_border);
 }
 
-size_t get_max_size(void)
-{
-    return (sizeof(t_game));
-}
-
 key_t get_key_t(const char *filepath)
 {
     errno = ERRNO_DEFAULT;

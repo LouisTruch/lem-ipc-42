@@ -1,38 +1,49 @@
 NAME = lemipc
+NAME_VISU = lemipc-visualizer
 
-SRC	= src/main.c src/shared_mem.c src/semaphore.c src/utils.c src/player.c src/game.c src/message_queue.c src/ipcs.c
+SRC	= $(wildcard src/*.c)
+SRC_VISU = $(wildcard visualizer/src/*.c)
 
 OBJ	= ${SRC:.c=.o}
+OBJ_VISU = ${SRC_VISU:.c=.o}
 
 LIB = libft/libft.a
 
 CC = clang
 
-CFLAGS = -Wall -Wextra -g 
+CFLAGS = -Wall -Wextra -Werror -g
+CFLAGS_VISU = -Wall -Wextra -Werror -g `sdl2-config --cflags`
+LDFLAGS= `sdl2-config --libs`
 
 RM = rm -f
 
-all : ${NAME}
+all : ${NAME} ${NAME_VISU}
 
-.c.o : ${CC} ${CFLAGS} -c $ -o ${<:.c=.o}
+%.o : %.c
+	${CC} ${CFLAGS_VISU} -c $< -o $@
+
+visu: ${NAME_VISU}
 
 ${NAME} : ${OBJ}
 	make -C libft
-	${CC} ${CFLAGS} -o ${NAME} ${OBJ} ${LIB}
+	${CC} -o ${NAME} ${OBJ} ${LIB}
 
+${NAME_VISU} : ${OBJ_VISU}
+	make -C libft
+	${CC} -o ${NAME_VISU} ${OBJ_VISU} ${LIB} ${LDFLAGS}
 
 clean :
 	make -C libft clean
-	${RM} ${OBJ}
+	${RM} ${OBJ} ${OBJ_VISU}
 
-fclean :
+fclean : clean
 	make -C libft fclean
-	${RM} ${NAME} ${OBJ}
+	${RM} ${NAME} ${NAME_VISU}
 
-r : ${NAME}
+r : ${NAME} ${NAME_VISU}
 	clear
 	bash run.sh
 
 re : fclean all
 
-.PHONY	: all clean fclean re t
+.PHONY	: all clean fclean re

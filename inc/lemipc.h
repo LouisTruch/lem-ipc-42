@@ -21,21 +21,22 @@
 #define ERRNO_DEFAULT 0
 #define ASCII_OFFSET 48
 
-#define SHM_KEY "./lemipc"
+#define SHM_KEY "./Makefile"
 #define SEM_GAME_MUTEX_KEY "./mySem"
 #define SEM_WAITING_GAME_KEY "./mySem1"
 #define SEM_SPECTATE_MUTEX_KEY "./ipc_clear.sh"
-#define MSQ_KEY "Makefile"
+#define MSQ_KEY "./lemipc"
+#define MSQ_SPECTATE_KEY "./src"
 #define URANDOM_PATH "/dev/urandom"
 
+#define BOARD_SIZE 50
 #define TIME_BEFORE_START 2
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
 #define MIN_PLAYER 4
-#define BOARD_SIZE 10
-#define NB_TEAM 5
+#define NB_TEAM 9
 #define FREE_TILE ' '
-#define GAME_SPEED 500000
+#define GAME_SPEED 50000
 #define NO_PATH -1
 
 #define CURRENT_TILE (p_coord[LINE] * BOARD_SIZE + p_coord[ROW])
@@ -79,7 +80,7 @@ typedef struct s_ipc
     bool first_player;
     int shmid;
     int semid[3];
-    int msqid;
+    int msqid[2];
     t_player player[1];
 } t_ipc;
 
@@ -88,6 +89,12 @@ typedef struct s_msg
     long mtype;
     int mtext[3];
 } t_msg;
+
+typedef struct s_msg_spect
+{
+    long mtype;
+    char mtext[BOARD_SIZE * BOARD_SIZE];
+} t_msg_spect;
 
 typedef enum e_error
 {
@@ -128,6 +135,12 @@ typedef enum e_direction
     CANT_MOVE,
 } t_direction;
 
+typedef enum e_msq_type
+{
+    PLAY,
+    SPECT,
+} t_msq_type;
+
 // Shared memory
 int init_shmem(t_ipc *ipc);
 int get_shmem_stat(const int shmid, struct shmid_ds *shmid_ds);
@@ -142,7 +155,7 @@ int sem_lock(int semid, int operation);
 int destroy_semaphore(int semid);
 
 // Message queue
-int init_msq(int *msqid);
+int init_msq(int *msqid, const char *filepath);
 void send_msq(int msq, t_msg *msg);
 void recv_msq(int msq, t_msg *msg, long team);
 int destroy_msq(int msqid);
@@ -159,7 +172,6 @@ void start_spectating(t_ipc *ipc);
 
 // Utils
 key_t get_key_t(const char *filepath);
-size_t get_max_size(void);
 int clean_up_ipcs(t_ipc *ipc);
 bool is_tile_free(const char tile);
 void print_board(const char *board);

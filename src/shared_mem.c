@@ -30,7 +30,7 @@ int init_shmem(t_ipc *ipc)
     }
 
     // Can change key to nothing here ???? idk
-    if ((ipc->shmid = get_shmem_block(key, get_max_size())) == IPC_ERROR)
+    if ((ipc->shmid = get_shmem_block(key, sizeof(t_game))) == IPC_ERROR)
     {
         perror("shmget");
         return SHMGET_ERROR;

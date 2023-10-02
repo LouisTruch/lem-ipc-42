@@ -16,44 +16,6 @@ int parse_arg(const char *arg)
     return team_nb;
 }
 
-// Delete
-void talk(t_ipc *ipc)
-{
-    sem_lock(ipc->semid[WAITING_START_MUTEX], LOCK);
-    for (int i = 0; i < 5; i++)
-    {
-        sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        t_msg msg;
-        msg.mtype = 1;
-        ft_memset(msg.mtext, -1, sizeof(msg.mtext));
-        usleep(10000);
-        if (msgrcv(ipc->msqid, &msg, (sizeof(t_msg) - sizeof(long)), 1, IPC_NOWAIT) == ENOMSG)
-        {
-        }
-        ft_printf("rcv %i mypid%i\n", msg.mtext[0], getpid());
-        // sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        t_msg send;
-        send.mtype = 1;
-        send.mtext[0] = getpid();
-        msgsnd(ipc->msqid, &send, (sizeof(t_msg) - sizeof(long)), 0);
-        // msgsnd(ipc->msqid, &send, (sizeof(t_msg) - sizeof(long)), 0);
-        // sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-    }
-}
-
-void test_init(t_ipc *ipc)
-{
-    sleep(2);
-    sem_lock(ipc->semid[WAITING_START_MUTEX], UNLOCK);
-    sem_lock(ipc->semid[WAITING_START_MUTEX], UNLOCK);
-    // t_msg send;
-    // send.mtype = 1;
-    // send.mtext[0] = getpid();
-    // msgsnd(ipc->msqid, &send, (sizeof(t_msg) - sizeof(long)), 0);
-    // exit(0);
-}
-
 int main(int argc, char **argv)
 {
     if (argc > 2)
