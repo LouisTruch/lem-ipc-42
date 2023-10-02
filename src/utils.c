@@ -1,21 +1,45 @@
 #include "../inc/lemipc.h"
 
+static char *color(int color)
+{
+    switch (color)
+    {
+    case 49:
+        return BOLDRED;
+    case 50:
+        return BOLDGREEN;
+    case 51:
+        return BOLDYELLOW;
+    case 52:
+        return BOLDBLUE;
+    case 53:
+        return BOLDMAGENTA;
+    case 54:
+        return BOLDCYAN;
+    case 55:
+        return BOLDWHITE;
+    default:
+        break;
+    }
+    return WHITE;
+}
+
 void print_board(const char *board)
 {
-    int i, j;
-    // ft_printf("---------------\r");
-    ft_printf("\n");
-    for (i = 0; i < BOARD_SIZE; i++)
+    char top_border[BOARD_SIZE + 2];
+    ft_memset(top_border, '-', sizeof(top_border));
+    ft_printf("%s\n", top_border);
+    // char t = "\U0001F600";
+    for (int i = 0; i < BOARD_SIZE; i++)
     {
-        // for (int z = 0; z <= 79; z++)
-        //     ft_printf(" ");
-        for (j = 0; j < BOARD_SIZE; j++)
+        ft_printf("|");
+        for (int j = 0; j < BOARD_SIZE; j++)
         {
-            ft_printf("%c", *(board + i * BOARD_SIZE + j));
+            ft_printf("%s%c%s", color(*(board + i * BOARD_SIZE + j)), *(board + i * BOARD_SIZE + j), RESET);
         }
-        ft_printf("\n");
+        ft_printf("|\n");
     }
-    ft_printf("\n");
+    ft_printf("%s\n", top_border);
 }
 
 size_t get_max_size(void)
@@ -34,45 +58,4 @@ bool is_tile_free(const char tile)
     if (tile == FREE_TILE)
         return true;
     return false;
-}
-
-int clean_up_ipcs(t_ipc *ipc)
-{
-    struct shmid_ds shmid_ds;
-
-    sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-    if (get_shmem_stat(ipc->shmid, &shmid_ds) == IPC_ERROR)
-    {
-        perror("utils.c clean_up_ipcs(): shmctl");
-        return (SHMCTL_STAT_ERROR);
-    }
-    if (shmid_ds.shm_nattch > 1)
-    {
-        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-        return 0;
-    }
-    sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-
-    ft_printf("Cleaning up...\n");
-    if (destroy_shmem(ipc->shmid) == IPC_ERROR)
-    {
-        perror("shmctl");
-        return SHMCTL_RMID_ERROR;
-    }
-    if (destroy_semaphore(ipc->semid[GAME_MUTEX]) == IPC_ERROR)
-    {
-        perror("semctl rmid");
-        return SEMCTL_RM_ERROR;
-    }
-    if (destroy_semaphore(ipc->semid[WAITING_START_MUTEX]) == IPC_ERROR)
-    {
-        perror("semctl rmid");
-        return SEMCTL_RM_ERROR;
-    }
-    if (destroy_msq(ipc->msqid) == IPC_ERROR)
-    {
-        perror("msgctl rmid");
-        return MSGCTL_RMID_ERROR;
-    }
-    return SUCCESS;
 }

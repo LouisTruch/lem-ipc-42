@@ -1,22 +1,21 @@
 #include "../inc/lemipc.h"
 
-void recv_msq(int msqid, t_msg *msg, int team)
+void send_msq(int msqid, t_msg *msg)
 {
     errno = ERRNO_DEFAULT;
-    if (msgrcv(msqid, msg, sizeof(t_msg), team, IPC_NOWAIT) == IPC_ERROR)
+    if (msgsnd(msqid, msg, (sizeof(t_msg) - sizeof(long)), 0) == IPC_ERROR)
+    {
+        perror("msgsnd");
+    }
+}
+void recv_msq(int msqid, t_msg *msg, long team)
+{
+    errno = ERRNO_DEFAULT;
+    if (msgrcv(msqid, msg, (sizeof(t_msg) - sizeof(long)), team, IPC_NOWAIT) == IPC_ERROR)
     {
         if (errno != ENOMSG)
             perror("msgrcv");
         return;
-    }
-}
-
-void send_msq(int msq, t_msg *msg)
-{
-    errno = ERRNO_DEFAULT;
-    if (msgsnd(msq, msg, sizeof(t_msg), 0) == IPC_ERROR)
-    {
-        perror("msgsnd");
     }
 }
 

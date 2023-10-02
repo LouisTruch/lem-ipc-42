@@ -1,6 +1,6 @@
 NAME = lemipc
 
-SRC	= src/main.c src/shared_mem.c src/semaphore.c src/utils.c src/player.c src/game.c src/message_queue.c
+SRC	= src/main.c src/shared_mem.c src/semaphore.c src/utils.c src/player.c src/game.c src/message_queue.c src/ipcs.c
 
 OBJ	= ${SRC:.c=.o}
 
@@ -8,7 +8,7 @@ LIB = libft/libft.a
 
 CC = clang
 
-CFLAGS = -Wall -Wextra  -g 
+CFLAGS = -Wall -Wextra -g 
 
 RM = rm -f
 

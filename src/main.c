@@ -7,72 +7,74 @@ int parse_arg(const char *arg)
         if (!ft_isdigit(arg[i]))
             return -1;
     }
-    return (ft_atoi(arg));
+    int team_nb = ft_atoi(arg);
+    if (team_nb <= 0 || team_nb > NB_TEAM)
+    {
+        ft_printf("Team number must be between 1 and %i\n", NB_TEAM);
+        exit(EXIT_FAILURE);
+    }
+    return team_nb;
+}
+
+// Delete
+void talk(t_ipc *ipc)
+{
+    sem_lock(ipc->semid[WAITING_START_MUTEX], LOCK);
+    for (int i = 0; i < 5; i++)
+    {
+        sem_lock(ipc->semid[GAME_MUTEX], LOCK);
+        t_msg msg;
+        msg.mtype = 1;
+        ft_memset(msg.mtext, -1, sizeof(msg.mtext));
+        usleep(10000);
+        if (msgrcv(ipc->msqid, &msg, (sizeof(t_msg) - sizeof(long)), 1, IPC_NOWAIT) == ENOMSG)
+        {
+        }
+        ft_printf("rcv %i mypid%i\n", msg.mtext[0], getpid());
+        // sem_lock(ipc->semid[GAME_MUTEX], LOCK);
+        t_msg send;
+        send.mtype = 1;
+        send.mtext[0] = getpid();
+        msgsnd(ipc->msqid, &send, (sizeof(t_msg) - sizeof(long)), 0);
+        // msgsnd(ipc->msqid, &send, (sizeof(t_msg) - sizeof(long)), 0);
+        // sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+    }
+}
+
+void test_init(t_ipc *ipc)
+{
+    sleep(2);
+    sem_lock(ipc->semid[WAITING_START_MUTEX], UNLOCK);
+    sem_lock(ipc->semid[WAITING_START_MUTEX], UNLOCK);
+    // t_msg send;
+    // send.mtype = 1;
+    // send.mtext[0] = getpid();
+    // msgsnd(ipc->msqid, &send, (sizeof(t_msg) - sizeof(long)), 0);
+    // exit(0);
 }
 
 int main(int argc, char **argv)
 {
-
     if (argc > 2)
     {
         ft_putstr_fd("Format is : ./lemipc [team-number]", STDERR_FILENO);
         return EXIT_FAILURE;
     }
+    t_ipc ipc;
     if (argc == 1)
     {
-        struct winsize w;
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w))
-            return EXIT_FAILURE;
-        ft_printf("Terminal info col:%i row:%i\n", w.ws_col, w.ws_row);
-        t_ipc ipc;
-        int err;
-        if ((err = init_sems(ipc.semid, &ipc.first_player)))
-            return err;
-        if ((err = init_shmem(&ipc)))
-            return err;
-        if ((err = init_msq(&ipc.msqid)))
-            return err;
+        sleep(TIME_BEFORE_START);
+        init_ipcs(&ipc);
         start_spectating(&ipc);
-        return (clean_up_ipcs(&ipc) | EXIT_SUCCESS);
-
-        // Spectate + Clear IPC if necessary (not needed in case of spectator ?)
+        return (clean_up_ipcs(&ipc));
     }
-
-    t_ipc ipc;
+    init_ipcs(&ipc);
     ipc.player->team = parse_arg(argv[1]);
-    if (ipc.player->team <= 0 || ipc.player->team > NB_TEAM)
-    {
-        ft_printf("Team number must be between 1 and %i\n", NB_TEAM);
-        return EXIT_FAILURE;
-    }
-
-    // Parsing argv to be done: only a positive int >= 0 && <= 9 or nothing
-    int err;
-    if ((err = init_sems(ipc.semid, &ipc.first_player)))
-        return err;
-    if ((err = init_shmem(&ipc)))
-        return err;
-    if ((err = init_msq(&ipc.msqid)))
-        return err;
-
     if (ipc.first_player)
-    {
-        if ((err = init_game(&ipc)))
-            return err;
-    }
-    else if (!ipc.first_player)
-    {
-        if ((err = add_player(&ipc)))
-        {
-            if (err == GAME_STARTED)
-            {
-                // Spectate + Clear IPC if necessary (not needed in case of spectator ?)
-            }
-            else
-                return err;
-        }
-    }
+        init_game(&ipc);
+    else
+        add_player(&ipc);
     start_game(&ipc);
-
-    return (clean_up_ipcs(&ipc) | EXIT_SUCCESS);
+    return (clean_up_ipcs(&ipc));
 }

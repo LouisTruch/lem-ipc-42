@@ -11,7 +11,7 @@ int sem_lock(int semid, int operation)
     return 0;
 }
 
-static int init_sem(int *sem, const char *filepath, int init_value, bool *first_player)
+static int init_sem(int *sem, const char *filepath, int sem_init_value, bool *first_player)
 {
     key_t key;
     if ((key = get_key_t(filepath)) == IPC_ERROR)
@@ -32,7 +32,7 @@ static int init_sem(int *sem, const char *filepath, int init_value, bool *first_
     if (*sem != IPC_ERROR)
     {
         *first_player = true;
-        sem_attr.val = init_value;
+        sem_attr.val = sem_init_value;
         if (semctl(*sem, 0, SETVAL, sem_attr) == IPC_ERROR)
         {
             perror("semctl setval");
@@ -68,6 +68,8 @@ int init_sems(int *sem, bool *first_player)
     if ((err = init_sem(&sem[WAITING_START_MUTEX], SEM_WAITING_GAME_KEY, 0, first_player)))
         return err;
     if ((err = init_sem(&sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1, first_player)))
+        return err;
+    if ((err = init_sem(&sem[SPECTATE_MUTEX], SEM_SPECTATE_MUTEX_KEY, 1, first_player)))
         return err;
     return SUCCESS;
 }

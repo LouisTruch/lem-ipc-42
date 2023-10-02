@@ -7,10 +7,7 @@ int init_game(t_ipc *ipc)
     ipc->game->started = false;
     ft_memset(ipc->game->board, FREE_TILE, BOARD_SIZE * BOARD_SIZE);
     sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-    ft_printf("Sleeping admin...\n");
-    sleep(SECOND_BEFORE_START);
-    ft_printf("Waking up admin...\n");
-    // Change this 2 lines below
+    sleep(TIME_BEFORE_START);
     sem_lock(ipc->semid[GAME_MUTEX], LOCK);
     set_player_spawn(ipc);
     struct shmid_ds shmid_ds;
@@ -19,6 +16,7 @@ int init_game(t_ipc *ipc)
         perror("game.c init_game(): shmctl");
         return (SHMCTL_STAT_ERROR);
     }
+    ft_printf("Starting game with %i players..\n", shmid_ds.shm_nattch);
     for (size_t i = 0; i < shmid_ds.shm_nattch - 1; i++)
         sem_lock(ipc->semid[WAITING_START_MUTEX], UNLOCK);
     ipc->game->started = true;
@@ -26,10 +24,12 @@ int init_game(t_ipc *ipc)
     return SUCCESS;
 }
 
-static void leave_game(t_game *game, int p_coord[2])
+static void leave_game(t_game *game, int p_coord[2], int semid)
 {
     game->board[CURRENT_TILE] = FREE_TILE;
     shmdt(game);
+    sem_lock(semid, UNLOCK);
+    exit(SUCCESS);
 }
 
 static bool check_player_death(t_player *player, const char *board)
@@ -56,7 +56,7 @@ static bool check_player_death(t_player *player, const char *board)
     return false;
 }
 
-static bool check_game_end(const char *board, const int team)
+static bool check_game_win(const char *board, const int team)
 {
     int nb_player = 0;
     int p_team = team;
@@ -119,27 +119,33 @@ static bool search_new_target(const char *board, int p_coord[2], int t_info[3])
 
 static bool search_target(const char *board, int t_info[3])
 {
-    // ...
-    for (int sqr_size = 1; sqr_size <= (BOARD_SIZE + 1) * 2; sqr_size++)
+    // f;afafdff
+    if (board[t_info[LINE] * BOARD_SIZE + t_info[ROW]] == t_info[TEAM] + ASCII_OFFSET)
+        return true;
+    if (board[(t_info[LINE] - 1) * BOARD_SIZE + t_info[ROW]] &&
+        board[(t_info[LINE] - 1) * BOARD_SIZE + t_info[ROW]] == t_info[TEAM] + ASCII_OFFSET)
     {
-        for (int line = t_info[LINE] - sqr_size; line <= t_info[LINE] + sqr_size; line++)
-        {
-            for (int row = t_info[ROW] - sqr_size; row <= t_info[ROW] + sqr_size; row++)
-            {
-                if (line >= 0 && line < BOARD_SIZE && row >= 0 && row < BOARD_SIZE)
-                {
-                    if (board[line * BOARD_SIZE + row] == t_info[TEAM] + ASCII_OFFSET)
-                    {
-                        // ft_printf("my team%c found ennemy in %i %i\n", p_team, i, j);
-                        t_info[LINE] = line;
-                        t_info[ROW] = row;
-                        return true;
-                    }
-                }
-            }
-        }
+        t_info[LINE]--;
+        return true;
     }
-    // Probably find new target if can't find target
+    if (board[(t_info[LINE] + 1) * BOARD_SIZE + t_info[ROW]] &&
+        board[(t_info[LINE] + 1) * BOARD_SIZE + t_info[ROW]] == t_info[TEAM] + ASCII_OFFSET)
+    {
+        t_info[LINE]++;
+        return true;
+    }
+    if (board[(t_info[LINE]) * BOARD_SIZE + t_info[ROW] - 1] &&
+        board[(t_info[LINE]) * BOARD_SIZE + t_info[ROW] - 1] == t_info[TEAM] + ASCII_OFFSET)
+    {
+        t_info[ROW]--;
+        return true;
+    }
+    if (board[(t_info[LINE]) * BOARD_SIZE + t_info[ROW] + 1] &&
+        board[(t_info[LINE]) * BOARD_SIZE + t_info[ROW] + 1] == t_info[TEAM] + ASCII_OFFSET)
+    {
+        t_info[ROW]++;
+        return true;
+    }
     return false;
 }
 
@@ -148,123 +154,201 @@ void set_target(const char *board, int p_coord[2], int t_info[3])
     if (t_info[TEAM] == -1)
     {
         search_new_target(board, p_coord, t_info);
-        ft_printf("Me '%c' %i %i Searched new target %i %i\n", board[CURRENT_TILE], p_coord[0], p_coord[1], t_info[0], t_info[1]);
-        // check return
     }
     else
     {
         if (!search_target(board, t_info))
             search_new_target(board, p_coord, t_info);
-        ft_printf("Me '%c' %i %i Target %i %i\n", board[CURRENT_TILE], p_coord[0], p_coord[1], t_info[0], t_info[1]);
-        // ft_printf("Found target %c at %i %i", t_info[TEAM] + ASCII_OFFSET, t_info[LINE], t_info[ROW]);
     }
 }
 
-static int select_direction(const char *board, const int p_coord[2], const int t_info[3])
+static bool is_around_target(const char *board, const int p_coord[2], const int t_info[3])
 {
-    // ff...
-    if (p_coord[LINE] > t_info[LINE] && is_tile_free(board[TOP_TILE]))
-        return UP;
-    else if (p_coord[LINE] > t_info[LINE] && !is_tile_free(board[TOP_TILE]))
+    for (int line = p_coord[LINE] - 1; line <= p_coord[LINE] + 1; line++)
     {
-        if (t_info[ROW] < p_coord[ROW] && is_tile_free(board[LEFT_TILE]))
-            return LEFT;
-        else if (t_info[ROW] > p_coord[ROW] && is_tile_free(board[RIGHT_TILE]))
-            return RIGHT;
+        for (int row = p_coord[ROW] - 1; row <= p_coord[ROW] + 1; row++)
+        {
+            if (line >= 0 && line < BOARD_SIZE && row >= 0 && row < BOARD_SIZE)
+            {
+                if (board[line * BOARD_SIZE + row] == t_info[TEAM] + ASCII_OFFSET)
+                {
+                    return true;
+                }
+            }
+        }
     }
-
-    if (p_coord[LINE] < t_info[LINE] && is_tile_free(board[BOTTOM_TILE]))
-        return DOWN;
-    else if (p_coord[LINE] < t_info[LINE] && !is_tile_free(board[BOTTOM_TILE]))
-    {
-        if (t_info[ROW] < p_coord[ROW] && is_tile_free(board[LEFT_TILE]))
-            return LEFT;
-        else if (t_info[ROW] > p_coord[ROW] && is_tile_free(board[RIGHT_TILE]))
-            return RIGHT;
-    }
-
-    if (t_info[ROW] < p_coord[ROW] && is_tile_free(board[LEFT_TILE]))
-        return LEFT;
-    else if (t_info[ROW] < p_coord[ROW] && !is_tile_free(board[LEFT_TILE]))
-    {
-        if (p_coord[LINE] > t_info[LINE] && is_tile_free(board[TOP_TILE]))
-            return UP;
-        else if (p_coord[LINE] < t_info[LINE] && is_tile_free(board[BOTTOM_TILE]))
-            return DOWN;
-    }
-
-    if (t_info[ROW] > p_coord[ROW] && is_tile_free(board[RIGHT_TILE]))
-        return RIGHT;
-    else if (t_info[ROW] > p_coord[ROW] && !is_tile_free(board[RIGHT_TILE]))
-    {
-        if (p_coord[LINE] > t_info[LINE] && is_tile_free(board[TOP_TILE]))
-            return UP;
-        else if (p_coord[LINE] < t_info[LINE] && is_tile_free(board[BOTTOM_TILE]))
-            return DOWN;
-    }
-
-    return (CANT_MOVE);
+    return false;
 }
 
-static void move_to_target(char *board, int p_coord[2], const int t_info[3])
+static bool is_p_around_target(const char *board, const int t_info[3])
 {
-    int direction = select_direction(board, p_coord, t_info);
-    ft_printf("dir %i\n", direction);
-    if (direction)
-        move_player(board, p_coord, direction);
+    for (int line = t_info[LINE] - 1; line <= t_info[LINE] + 1; line++)
+    {
+        for (int row = t_info[ROW] - 1; row <= t_info[ROW] + 1; row++)
+        {
+            if (line >= 0 && line < BOARD_SIZE && row >= 0 && row < BOARD_SIZE)
+            {
+                if (board[line * BOARD_SIZE + row] == 'P')
+                {
+                    // ft_printf("is around\n");
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+static void flood_fill(char *c_board)
+{
+    for (int line = 0; line < BOARD_SIZE; line++)
+    {
+        for (int row = 0; row < BOARD_SIZE; row++)
+        {
+            if (c_board[line * BOARD_SIZE + row] == 'P')
+            {
+                if (line - 1 >= 0 && c_board[(line - 1) * BOARD_SIZE + row] == FREE_TILE)
+                    c_board[(line - 1) * BOARD_SIZE + row] = 'p';
+                if (line + 1 < BOARD_SIZE && c_board[(line + 1) * BOARD_SIZE + row] == FREE_TILE)
+                    c_board[(line + 1) * BOARD_SIZE + row] = 'p';
+                if (row - 1 >= 0 && c_board[line * BOARD_SIZE + row - 1] == FREE_TILE)
+                    c_board[line * BOARD_SIZE + row - 1] = 'p';
+                if (row + 1 < BOARD_SIZE && c_board[line * BOARD_SIZE + row + 1] == FREE_TILE)
+                    c_board[line * BOARD_SIZE + row + 1] = 'p';
+            }
+        }
+    }
+    for (int i = 0; c_board[i]; i++)
+    {
+        if (c_board[i] == 'p')
+            c_board[i] = 'P';
+    }
+}
+
+static int find_path_length(const char *board, const int p_coord[2], const int t_info[3])
+{
+    if (p_coord[LINE] < 0 || p_coord[LINE] >= BOARD_SIZE || p_coord[ROW] < 0 || p_coord[ROW] >= BOARD_SIZE)
+        return NO_PATH;
+
+    char c_board[BOARD_SIZE * BOARD_SIZE];
+    ft_memcpy(c_board, board, BOARD_SIZE * BOARD_SIZE);
+    c_board[(p_coord[LINE]) * BOARD_SIZE + p_coord[ROW]] = 'p';
+    c_board[TOP_TILE] = 'p';
+    int path_length = 0;
+    while (!is_p_around_target(c_board, t_info))
+    {
+        flood_fill(c_board);
+        path_length++;
+        if (path_length > BOARD_SIZE * BOARD_SIZE)
+            return -1;
+    }
+    return path_length;
+}
+
+static int select_path(const char *board, const int p_coord[2], const int t_info[3])
+{
+    if (is_around_target(board, p_coord, t_info))
+        return CANT_MOVE;
+
+    // Check map limit here
+    int path_length[4];
+    path_length[UP] = find_path_length(board, (int[2]){p_coord[LINE] - 1, p_coord[ROW]}, t_info);
+    path_length[DOWN] = find_path_length(board, (int[2]){p_coord[LINE] + 1, p_coord[ROW]}, t_info);
+    path_length[LEFT] = find_path_length(board, (int[2]){p_coord[LINE], p_coord[ROW] - 1}, t_info);
+    path_length[RIGHT] = find_path_length(board, (int[2]){p_coord[LINE], p_coord[ROW] + 1}, t_info);
+
+    int min_index = INT_MAX;
+    for (int i = 0; i < 4; i++)
+    {
+        if (path_length[i] >= 0 && path_length[i] < min_index)
+            min_index = i;
+        // ft_printf("pLength: %i\n", path_length[i]);
+    }
+    return min_index != INT_MAX ? min_index : CANT_MOVE;
+}
+
+static bool check_end_conds(t_ipc *ipc)
+{
+    if (check_player_death(ipc->player, ipc->game->board))
+    {
+        // ft_printf("Leaving: Death\n");
+        return true;
+    }
+    if (check_game_win(ipc->game->board, ipc->player->team))
+    {
+        // ft_printf("Leaving: Game ended\n");
+        return true;
+    }
+    if (check_draw(ipc->game->board))
+    {
+        // ft_printf("Leaving: Draw\n");
+        return true;
+    }
+    return false;
 }
 
 void start_game(t_ipc *ipc)
 {
     t_msg msg;
-    msg.msg_type = ipc->player->team;
-    ft_memset(&msg.t_info, -1, sizeof(msg.t_info));
-    for (int i = 0; i < 10; i++)
+    ft_memset(&msg.mtext, -1, sizeof(int) * 3);
+    msg.mtype = ipc->player->team;
+
+    while (1)
     {
-        // ft_printf("Starting game...team:%c\n", ipc->player->team + ASCII_OFFSET);
-        // Check around player if dead or not
         sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        if (check_player_death(ipc->player, ipc->game->board) || check_game_end(ipc->game->board, ipc->player->team) || check_draw(ipc->game->board))
-        {
-            ft_printf("Leaving game\n");
-            leave_game(ipc->game, ipc->player->coord);
-            // Change exit value
-            sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-            exit(0);
-        }
-        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-        // struct msqid_ds msq_struct;
-        // msgctl(ipc->msqid, IPC_STAT, &msq_struct);
-        // ft_printf("stat %i %i\n", msq_struct.msg_qnum, msq_struct.msg_qbytes);
-        // struct msginfo info;
-        // msgctl(ipc->msqid, MSG_INFO, &info);
-        // ft_printf("mess %i\n", info.msgtql);
-        // ft_printf("recv_msg me=%c %i i=%i\n", ipc->player->team + ASCII_OFFSET, getpid(), i);
         recv_msq(ipc->msqid, &msg, ipc->player->team);
-        sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        set_target(ipc->game->board, ipc->player->coord, msg.t_info);
-        move_to_target(ipc->game->board, ipc->player->coord, msg.t_info);
-        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-        send_msq(ipc->msqid, &msg);
+        if (check_end_conds(ipc))
+            break;
+        sem_lock(ipc->semid[SPECTATE_MUTEX], LOCK);
+        if (ipc->player->team == 1)
+            ft_printf("recv: %i %i\n", msg.mtext[0], msg.mtext[1]);
+        set_target(ipc->game->board, ipc->player->coord, msg.mtext);
+        if (ipc->player->team == 1)
+            ft_printf("target: %i %i\n", msg.mtext[0], msg.mtext[1]);
+        int direction = select_path(ipc->game->board, ipc->player->coord, msg.mtext);
+        if (ipc->player->team == 1)
+            ft_printf("dir: %i\n", direction);
+        move_player(ipc->game->board, ipc->player->coord, direction);
         usleep(GAME_SPEED);
+        sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
+        send_msq(ipc->msqid, &msg);
+        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
     }
+    ft_printf("Leaving game...\n");
+    leave_game(ipc->game, ipc->player->coord, ipc->semid[GAME_MUTEX]);
+}
+
+static bool board_empty(t_ipc *ipc)
+{
+    for (int i = 0; ipc->game->board[i]; i++)
+    {
+        if (ipc->game->board[i] != FREE_TILE)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void start_spectating(t_ipc *ipc)
 {
-
-    for (int i = 0; i < 20; i++)
+    while (!ipc->game->started)
     {
-        while (!ipc->game->started)
-        {
-            sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-            usleep(GAME_SPEED);
-            sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-        }
-
         sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        print_board(ipc->game->board);
-        usleep(GAME_SPEED);
+        // usleep(GAME_SPEED);
         sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+    }
+    ft_printf("Starting spectator mode\n");
+    while (1)
+    {
+        sem_lock(ipc->semid[SPECTATE_MUTEX], LOCK);
+        if (board_empty(ipc))
+        {
+            ft_printf("Exiting spectator mode\n");
+            sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
+            return;
+        }
+        print_board(ipc->game->board);
+        sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
     }
 }

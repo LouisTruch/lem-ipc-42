@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+# Script to kill ghost process and remaining IPCs if program fails to do it
+
 if (killall lemipc); then
     echo "Killing lemipc proccess"
 fi
@@ -10,6 +12,14 @@ if [ -n "$shmid" ]; then
     ipcrm -m ${shmid}
 else
     echo "No Shared Memory to delete"
+fi
+
+semid=$(ipcs -s | grep 666 | awk '{print $2}' | head -n 1)
+if [ -n "$semid" ]; then
+    echo "Deleting a Semaphore"
+    ipcrm -s ${semid}
+else
+    echo "No Semaphore to delete"
 fi
 
 semid=$(ipcs -s | grep 666 | awk '{print $2}' | head -n 1)

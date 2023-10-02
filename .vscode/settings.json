@@ -2,6 +2,7 @@
     "files.associations": {
         "types.h": "c",
         "stdbool.h": "c",
-        "lemipc.h": "c"
+        "lemipc.h": "c",
+        "stdio.h": "c"
     }
 }
