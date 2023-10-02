@@ -3,10 +3,8 @@
 
 #include <SDL2/SDL.h>
 #include <stdbool.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
 #include <sys/msg.h>
+#include <signal.h>
 
 #include <errno.h>
 

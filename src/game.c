@@ -160,25 +160,17 @@ static bool is_around_target(const char *board, const int p_coord[2], const int 
 static bool is_p_around_target(const char *board, const int t_info[3])
 {
     for (int line = t_info[LINE] - 1; line <= t_info[LINE] + 1; line++)
-    {
         for (int row = t_info[ROW] - 1; row <= t_info[ROW] + 1; row++)
-        {
             if (line >= 0 && line < BOARD_SIZE && row >= 0 && row < BOARD_SIZE)
-            {
                 if (board[line * BOARD_SIZE + row] == 'P')
                     return true;
-            }
-        }
-    }
     return false;
 }
 
 static void flood_fill(char *c_board)
 {
     for (int line = 0; line < BOARD_SIZE; line++)
-    {
         for (int row = 0; row < BOARD_SIZE; row++)
-        {
             if (c_board[line * BOARD_SIZE + row] == 'P')
             {
                 if (line - 1 >= 0 && c_board[(line - 1) * BOARD_SIZE + row] == FREE_TILE)
@@ -190,13 +182,10 @@ static void flood_fill(char *c_board)
                 if (row + 1 < BOARD_SIZE && c_board[line * BOARD_SIZE + row + 1] == FREE_TILE)
                     c_board[line * BOARD_SIZE + row + 1] = 'p';
             }
-        }
-    }
+    // Conditionnal jump ??
     for (int i = 0; c_board[i]; i++)
-    {
         if (c_board[i] == 'p')
             c_board[i] = 'P';
-    }
 }
 
 static int find_path_length(const char *board, const int p_coord[2], const int t_info[3])
@@ -205,7 +194,7 @@ static int find_path_length(const char *board, const int p_coord[2], const int t
         return NO_PATH;
 
     char c_board[BOARD_SIZE * BOARD_SIZE];
-    ft_memcpy(c_board, board, BOARD_SIZE * BOARD_SIZE);
+    ft_memcpy(&c_board, board, BOARD_SIZE * BOARD_SIZE);
     c_board[(p_coord[LINE]) * BOARD_SIZE + p_coord[ROW]] = 'p';
     c_board[TOP_TILE] = 'p';
     int path_length = 0;
@@ -283,6 +272,7 @@ void start_game(t_ipc *ipc)
 
     while (1)
     {
+        send_board(ipc->msqid[SPECT], ipc->game->board);
         sem_lock(ipc->semid[GAME_MUTEX], LOCK);
         recv_msq(ipc->msqid[PLAY], &msg, ipc->player->team);
         if (check_end_conds(ipc))
@@ -291,7 +281,6 @@ void start_game(t_ipc *ipc)
         set_target(ipc->game->board, ipc->player->coord, msg.mtext);
         int direction = select_path(ipc->game->board, ipc->player->coord, msg.mtext);
         move_player(ipc->game->board, ipc->player->coord, direction);
-        send_board(ipc->msqid[SPECT], ipc->game->board);
         usleep(GAME_SPEED);
         // sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
         send_msq(ipc->msqid[PLAY], &msg);

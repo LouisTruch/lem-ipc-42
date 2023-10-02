@@ -1,10 +1,10 @@
 #!/usr/bin/bash
 
-for i in {1..2};
+for i in {1..3};
 do
-    ./lemipc 1&
-    ./lemipc 2&
-    ./lemipc 3&
+    valgrind ./lemipc 1&
+    valgrind ./lemipc 2&
+    valgrind ./lemipc 3&
     # ./lemipc 4&i
     # ./lemipc 5&
     # ./lemipc 6&
@@ -14,4 +14,3 @@ do
 done
 sleep 0.5
 ./lemipc-visualizer
-# ./lemipc

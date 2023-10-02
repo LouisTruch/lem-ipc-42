@@ -18,19 +18,13 @@ int parse_arg(const char *arg)
 
 int main(int argc, char **argv)
 {
-    if (argc > 2)
+    if (argc != 2)
     {
-        ft_putstr_fd("Format is : ./lemipc [team-number]", STDERR_FILENO);
+        ft_putstr_fd("Format is : ./lemipc [team-number(1-9)]", STDERR_FILENO);
         return EXIT_FAILURE;
     }
     t_ipc ipc;
-    if (argc == 1)
-    {
-        sleep(TIME_BEFORE_START);
-        init_ipcs(&ipc);
-        start_spectating(&ipc);
-        return (clean_up_ipcs(&ipc));
-    }
+    srand(getpid());
     init_ipcs(&ipc);
     ipc.player->team = parse_arg(argv[1]);
     if (ipc.first_player)

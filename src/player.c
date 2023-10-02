@@ -2,46 +2,29 @@
 
 void set_player_spawn(t_ipc *ipc)
 {
-    errno = ERRNO_DEFAULT;
-    int fd = open(URANDOM_PATH, O_RDONLY);
-    if (fd == -1)
+    int i_line, i_row;
+    char line[BOARD_SIZE];
+    ft_memset(line, 0, BOARD_SIZE);
+    while (1)
     {
-        perror("open");
-        return;
+        i_line = rand() % BOARD_SIZE;
+        ft_memcpy(line, &ipc->game->board[i_line * BOARD_SIZE], BOARD_SIZE);
+        if (ft_strchr(line, FREE_TILE))
+        {
+            while (1)
+            {
+                i_row = rand() % BOARD_SIZE;
+                if (line[i_row] == FREE_TILE)
+                    break;
+            }
+            break;
+        }
     }
-    int line, row;
-    char complete_line[BOARD_SIZE + 1] = {0};
-    char buff[1];
-    do
-    {
-        if (read(fd, buff, 1) == -1)
-        {
-            perror("read");
-            return;
-        }
-        // Check open/read/close return...
-        line = buff[0] % BOARD_SIZE;
-        ft_memcpy(complete_line, &(ipc->game->board[line * BOARD_SIZE]), BOARD_SIZE);
-    } while (!ft_strchr(complete_line, FREE_TILE));
-    do
-    {
-        if (read(fd, buff, 1) == -1)
-        {
-            perror("read");
-            return;
-        }
-        row = buff[0] % BOARD_SIZE;
-    } while (complete_line[row] != FREE_TILE);
 
-    if (close(fd) == -1)
-    {
-        perror("close");
-        return;
-    }
-    ft_printf("Spawn set team:%i\n", ipc->player->team);
-    ipc->game->board[line * BOARD_SIZE + row] = ipc->player->team + ASCII_OFFSET;
-    ipc->player->coord[LINE] = line;
-    ipc->player->coord[ROW] = row;
+    ft_printf("Spawn set team:%i %i %i\n", ipc->player->team, i_line, i_row);
+    ipc->game->board[i_line * BOARD_SIZE + i_row] = ipc->player->team + ASCII_OFFSET;
+    ipc->player->coord[LINE] = i_line;
+    ipc->player->coord[ROW] = i_row;
 }
 
 void add_player(t_ipc *ipc)
