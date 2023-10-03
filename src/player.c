@@ -20,7 +20,6 @@ void set_player_spawn(t_ipc *ipc)
             break;
         }
     }
-    ft_printf("Spawn set team:%i %i %i\n", ipc->player->team, i_line, i_row);
     ipc->game->board[i_line * BOARD_SIZE + i_row] = ipc->player->team + ASCII_OFFSET;
     ipc->player->coord[LINE] = i_line;
     ipc->player->coord[ROW] = i_row;
@@ -32,7 +31,7 @@ void add_player(t_ipc *ipc)
     if (ipc->game->started)
     {
         ft_putstr_fd("Game already started, exiting...\n", STDERR_FILENO);
-        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
+        clean_up_ipcs(ipc);
         exit(GAME_STARTED);
     }
     set_player_spawn(ipc);

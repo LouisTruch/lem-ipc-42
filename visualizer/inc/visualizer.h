@@ -12,6 +12,7 @@
 
 #define IPC_ERROR -1
 #define ERRNO_DEFAULT 0
+#define TIME_BEFORE_FORCE_EXIT 3
 
 #define MSQ_SPECTATE_KEY "./src"
 #define SEM_KEY "./ipc_clear.sh"
@@ -19,20 +20,31 @@
 
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 1000
-#define BOARD_SIZE 50
+#define BOARD_SIZE 100
+#define SPAWNING_POS 65535
+#define DEATH_POS 65534
 
 #define FREE_TILE ' '
 
 typedef struct s_msg_spect
 {
     long mtype;
-    char mtext[BOARD_SIZE * BOARD_SIZE];
+    u_int16_t pos[2];
+    u_int16_t old_pos[2];
+    u_int8_t team;
 } t_msg_spect;
+
+typedef enum e_rect
+{
+    CLEAR,
+    PLAYER,
+} t_rect;
 
 typedef struct s_SDL
 {
     SDL_Window *window;
     SDL_Renderer *renderer;
+    SDL_Rect rect[2];
     bool active;
 } t_SDL;
 

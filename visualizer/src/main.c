@@ -44,66 +44,73 @@ void init_ipc(t_ipc *ipc)
     return;
 }
 
-void set_player_color(t_SDL *SDL, const char c)
+void init_rects_draw(SDL_Rect rect[2])
 {
-    switch (c)
+    rect[CLEAR].w = WINDOW_WIDTH / BOARD_SIZE;
+    rect[CLEAR].h = WINDOW_HEIGHT / BOARD_SIZE;
+    rect[PLAYER].w = WINDOW_WIDTH / BOARD_SIZE;
+    rect[PLAYER].h = WINDOW_HEIGHT / BOARD_SIZE;
+}
+
+void set_rect_color(t_SDL *SDL, uint8_t team)
+{
+    switch (team)
     {
-    case '1':
+    case 1:
         SDL_SetRenderDrawColor(SDL->renderer, 0, 0, 255, 0);
         break;
-    case '2':
+    case 2:
         SDL_SetRenderDrawColor(SDL->renderer, 255, 0, 0, 0);
         break;
-    case '3':
+    case 3:
         SDL_SetRenderDrawColor(SDL->renderer, 0, 255, 0, 0);
         break;
-    case '4':
+    case 4:
         SDL_SetRenderDrawColor(SDL->renderer, 255, 255, 0, 0);
         break;
-    case '5':
+    case 5:
         SDL_SetRenderDrawColor(SDL->renderer, 255, 0, 255, 0);
         break;
-    case '6':
+    case 6:
         SDL_SetRenderDrawColor(SDL->renderer, 255, 128, 128, 0);
         break;
-    case '7':
+    case 7:
         SDL_SetRenderDrawColor(SDL->renderer, 128, 128, 128, 0);
         break;
-    case '8':
+    case 8:
         SDL_SetRenderDrawColor(SDL->renderer, 128, 0, 0, 0);
         break;
-    case '9':
+    case 9:
         SDL_SetRenderDrawColor(SDL->renderer, 255, 128, 0, 0);
+        break;
+    default:
+        SDL_SetRenderDrawColor(SDL->renderer, 0, 0, 0, 0);
         break;
     }
 }
 
-void draw_board(t_SDL *SDL, const char *board)
+void draw_board(t_SDL *SDL, t_msg_spect *msg)
 {
-    SDL_Rect clear;
-    clear.x = 0;
-    clear.y = 0;
-    clear.w = WINDOW_WIDTH;
-    clear.h = WINDOW_HEIGHT;
-    SDL_SetRenderDrawColor(SDL->renderer, 0, 0, 0, 255);
-    SDL_RenderClear(SDL->renderer);
-
-    SDL_Rect rect;
-    rect.w = WINDOW_HEIGHT / BOARD_SIZE;
-    rect.h = WINDOW_WIDTH / BOARD_SIZE;
-    for (int line = 0; line < BOARD_SIZE; line++)
+    if (msg->old_pos[0] == DEATH_POS)
     {
-        for (int row = 0; row < BOARD_SIZE; row++)
-        {
-            if (board[line * BOARD_SIZE + row] != FREE_TILE)
-            {
-                rect.x = line * rect.w;
-                rect.y = row * rect.h;
-                set_player_color(SDL, board[line * BOARD_SIZE + row]);
-                SDL_RenderFillRect(SDL->renderer, &rect);
-            }
-        }
+        SDL->rect[CLEAR].x = msg->pos[0] * (WINDOW_WIDTH / BOARD_SIZE);
+        SDL->rect[CLEAR].y = msg->pos[1] * (WINDOW_WIDTH / BOARD_SIZE);
+        set_rect_color(SDL, 0);
+        SDL_RenderFillRect(SDL->renderer, &SDL->rect[CLEAR]);
+        return;
     }
+    else if (msg->old_pos[0] < BOARD_SIZE)
+    {
+        SDL->rect[CLEAR].x = msg->old_pos[0] * (WINDOW_WIDTH / BOARD_SIZE);
+        SDL->rect[CLEAR].y = msg->old_pos[1] * (WINDOW_WIDTH / BOARD_SIZE);
+        set_rect_color(SDL, 0);
+        SDL_RenderFillRect(SDL->renderer, &SDL->rect[CLEAR]);
+    }
+
+    SDL->rect[PLAYER].x = msg->pos[0] * (WINDOW_WIDTH / BOARD_SIZE);
+    SDL->rect[PLAYER].y = msg->pos[1] * (WINDOW_WIDTH / BOARD_SIZE);
+    set_rect_color(SDL, msg->team);
+    SDL_RenderFillRect(SDL->renderer, &SDL->rect[PLAYER]);
     SDL_RenderPresent(SDL->renderer);
 }
 
@@ -115,7 +122,7 @@ void alarm_handler(int sigint)
 bool rcv_msg(t_msg_spect *msg, t_ipc *ipc)
 {
     signal(SIGALRM, alarm_handler);
-    alarm(3);
+    alarm(TIME_BEFORE_FORCE_EXIT);
     if (msgrcv(ipc->msqid, msg, (sizeof(t_msg_spect) - sizeof(long)), 0, 0) == IPC_ERROR)
     {
         return false;
@@ -137,7 +144,6 @@ void check_input(t_SDL *SDL)
                 SDL->active = false;
                 break;
             }
-            printf("%i\n", e.key.keysym.scancode);
             break;
         case SDL_QUIT:
             SDL->active = false;
@@ -153,9 +159,10 @@ void start_loop(t_SDL *SDL, t_ipc *ipc)
     {
         check_input(SDL);
         if (rcv_msg(&msg, ipc))
-            draw_board(SDL, msg.mtext);
+            draw_board(SDL, &msg);
         else
             break;
+        // SDL_Delay(100);
     }
 }
 
@@ -167,6 +174,7 @@ int main(void)
     t_ipc ipc;
     init_ipc(&ipc);
 
+    init_rects_draw(SDL.rect);
     start_loop(&SDL, &ipc);
 
     if (msgctl(ipc.msqid, IPC_RMID, NULL) == IPC_ERROR)

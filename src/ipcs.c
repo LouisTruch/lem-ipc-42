@@ -27,7 +27,7 @@ int clean_up_ipcs(t_ipc *ipc)
         perror("utils.c clean_up_ipcs(): shmctl");
         return (SHMCTL_STAT_ERROR);
     }
-    if (shmid_ds.shm_nattch > 1)
+    if (shmid_ds.shm_nattch != 0)
     {
         sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
         return 0;

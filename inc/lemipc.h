@@ -28,15 +28,16 @@
 #define MSQ_SPECTATE_KEY "./src"
 #define URANDOM_PATH "/dev/urandom"
 
-#define BOARD_SIZE 50
+#define BOARD_SIZE 100
 #define TIME_BEFORE_START 2
 #define NB_OPPONENT_TO_DIE 2
 #define MAX_PLAYER 64
-#define MIN_PLAYER 4
 #define NB_TEAM 9
 #define FREE_TILE ' '
-#define GAME_SPEED 10000
+#define GAME_SPEED 50000
 #define NO_PATH -1
+#define SPAWNING_POS 65535
+#define DEATH_POS 65534
 
 #define CURRENT_TILE (p_coord[LINE] * BOARD_SIZE + p_coord[ROW])
 #define TOP_TILE ((p_coord[LINE] - 1) * BOARD_SIZE + p_coord[ROW])
@@ -82,7 +83,9 @@ typedef struct s_msg
 typedef struct s_msg_spect
 {
     long mtype;
-    char mtext[BOARD_SIZE * BOARD_SIZE];
+    u_int16_t pos[2];
+    u_int16_t old_pos[2];
+    u_int8_t team;
 } t_msg_spect;
 
 typedef enum e_error

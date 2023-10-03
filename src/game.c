@@ -252,14 +252,15 @@ static bool check_end_conds(t_ipc *ipc)
     return false;
 }
 
-void send_board(const int msqid, const char *board)
+void send_pos_spect(const int msqid, const int p_coord[2], t_msg_spect *msg_spect)
 {
-    t_msg_spect msg;
-    msg.mtype = 1;
-    ft_memcpy(msg.mtext, board, BOARD_SIZE * BOARD_SIZE);
-    if (msgsnd(msqid, &msg, (sizeof(t_msg_spect) - sizeof(long)), 0) == IPC_ERROR)
+    msg_spect->old_pos[LINE] = msg_spect->pos[LINE];
+    msg_spect->old_pos[ROW] = msg_spect->pos[ROW];
+    msg_spect->pos[LINE] = p_coord[LINE];
+    msg_spect->pos[ROW] = p_coord[ROW];
+    if (msgsnd(msqid, msg_spect, (sizeof(t_msg_spect) - sizeof(long)), 0) == IPC_ERROR)
     {
-        perror("msgsnd sendboard");
+        // perror("msgsnd sendboard");
     }
 }
 
@@ -269,10 +270,14 @@ void start_game(t_ipc *ipc)
     ft_memset(&msg.mtext, -1, sizeof(int) * 3);
     msg.mtype = ipc->player->team;
 
+    t_msg_spect msg_spect;
+    msg_spect.mtype = 1;
+    msg_spect.pos[0] = SPAWNING_POS;
+    msg_spect.team = ipc->player->team;
+
     while (1)
     {
-        sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        send_board(ipc->msqid[SPECT], ipc->game->board);
+        send_pos_spect(ipc->msqid[SPECT], ipc->player->coord, &msg_spect);
         recv_msq(ipc->msqid[PLAY], &msg, ipc->player->team);
         if (check_end_conds(ipc))
             break;
@@ -283,6 +288,8 @@ void start_game(t_ipc *ipc)
         send_msq(ipc->msqid[PLAY], &msg);
         sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
     }
+    msg_spect.pos[0] = DEATH_POS;
+    send_pos_spect(ipc->msqid[SPECT], ipc->player->coord, &msg_spect);
     leave_game(ipc->game, ipc->player->coord);
     clean_up_ipcs(ipc);
 }

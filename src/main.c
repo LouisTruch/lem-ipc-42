@@ -23,8 +23,8 @@ int main(int argc, char **argv)
         ft_putstr_fd("Format is : ./lemipc [team-number(1-9)]", STDERR_FILENO);
         return EXIT_FAILURE;
     }
-    t_ipc ipc;
     srand(getpid());
+    t_ipc ipc;
     init_ipcs(&ipc);
     ipc.player->team = parse_arg(argv[1]);
     if (ipc.first_player)
