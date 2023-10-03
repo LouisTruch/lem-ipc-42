@@ -27,7 +27,6 @@ static int init_sem(int *sem, const char *filepath, int sem_init_value, bool *fi
         struct semid_ds *buf;
         ushort array[1];
     } sem_attr;
-    // struct semid_ds semid_ds;
     *sem = semget(key, 1, 0666 | IPC_CREAT | IPC_EXCL);
     if (*sem != IPC_ERROR)
     {
@@ -48,11 +47,6 @@ static int init_sem(int *sem, const char *filepath, int sem_init_value, bool *fi
             perror("semget");
             return SEMGET_ERROR;
         }
-        // ???
-        // while (semid_ds.sem_otime == 0)
-        // {
-        //     usleep(100);
-        // }
     }
     else
     {
@@ -68,8 +62,6 @@ int init_sems(int *sem, bool *first_player)
     if ((err = init_sem(&sem[WAITING_START_MUTEX], SEM_WAITING_GAME_KEY, 0, first_player)))
         return err;
     if ((err = init_sem(&sem[GAME_MUTEX], SEM_GAME_MUTEX_KEY, 1, first_player)))
-        return err;
-    if ((err = init_sem(&sem[SPECTATE_MUTEX], SEM_SPECTATE_MUTEX_KEY, 1, first_player)))
         return err;
     return SUCCESS;
 }

@@ -24,7 +24,6 @@
 #define SHM_KEY "./Makefile"
 #define SEM_GAME_MUTEX_KEY "./mySem"
 #define SEM_WAITING_GAME_KEY "./mySem1"
-#define SEM_SPECTATE_MUTEX_KEY "./ipc_clear.sh"
 #define MSQ_KEY "./lemipc"
 #define MSQ_SPECTATE_KEY "./src"
 #define URANDOM_PATH "/dev/urandom"
@@ -36,7 +35,7 @@
 #define MIN_PLAYER 4
 #define NB_TEAM 9
 #define FREE_TILE ' '
-#define GAME_SPEED 50000
+#define GAME_SPEED 10000
 #define NO_PATH -1
 
 #define CURRENT_TILE (p_coord[LINE] * BOARD_SIZE + p_coord[ROW])
@@ -44,16 +43,6 @@
 #define BOTTOM_TILE ((p_coord[LINE] + 1) * BOARD_SIZE + p_coord[ROW])
 #define LEFT_TILE (p_coord[LINE] * BOARD_SIZE + (p_coord[ROW] - 1))
 #define RIGHT_TILE (p_coord[LINE] * BOARD_SIZE + (p_coord[ROW] + 1))
-
-#define RESET "\033[0m"
-#define WHITE "\033[37m"
-#define BOLDRED "\033[1m\033[31m"
-#define BOLDGREEN "\033[1m\033[32m"
-#define BOLDYELLOW "\033[1m\033[33m"
-#define BOLDBLUE "\033[1m\033[34m"
-#define BOLDMAGENTA "\033[1m\033[35m"
-#define BOLDCYAN "\033[1m\033[36m"
-#define BOLDWHITE "\033[1m\033[37m"
 
 typedef enum e_coord
 {
@@ -79,7 +68,7 @@ typedef struct s_ipc
     t_game *game;
     bool first_player;
     int shmid;
-    int semid[3];
+    int semid[2];
     int msqid[2];
     t_player player[1];
 } t_ipc;
@@ -168,12 +157,10 @@ void move_player(char *board, int p_coord[2], const int direction);
 
 // Game
 void start_game(t_ipc *ipc);
-void start_spectating(t_ipc *ipc);
 
 // Utils
 key_t get_key_t(const char *filepath);
 int clean_up_ipcs(t_ipc *ipc);
 bool is_tile_free(const char tile);
-void print_board(const char *board);
 
 #endif

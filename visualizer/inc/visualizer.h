@@ -17,8 +17,8 @@
 #define SEM_KEY "./ipc_clear.sh"
 #define SHM_KEY "./Makefile"
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH 1000
+#define WINDOW_HEIGHT 1000
 #define BOARD_SIZE 50
 
 #define FREE_TILE ' '

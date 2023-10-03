@@ -49,31 +49,31 @@ void set_player_color(t_SDL *SDL, const char c)
     switch (c)
     {
     case '1':
-        SDL_SetRenderDrawColor(SDL->renderer, 0, 255, 0, 0);
-        break;
-    case '2':
         SDL_SetRenderDrawColor(SDL->renderer, 0, 0, 255, 0);
         break;
-    case '3':
+    case '2':
         SDL_SetRenderDrawColor(SDL->renderer, 255, 0, 0, 0);
         break;
-    case '4':
-        SDL_SetRenderDrawColor(SDL->renderer, 255, 0, 255, 0);
+    case '3':
+        SDL_SetRenderDrawColor(SDL->renderer, 0, 255, 0, 0);
         break;
-    case '5':
+    case '4':
         SDL_SetRenderDrawColor(SDL->renderer, 255, 255, 0, 0);
         break;
+    case '5':
+        SDL_SetRenderDrawColor(SDL->renderer, 255, 0, 255, 0);
+        break;
     case '6':
-        SDL_SetRenderDrawColor(SDL->renderer, 0, 255, 255, 0);
+        SDL_SetRenderDrawColor(SDL->renderer, 255, 128, 128, 0);
         break;
     case '7':
-        SDL_SetRenderDrawColor(SDL->renderer, 125, 0, 255, 0);
+        SDL_SetRenderDrawColor(SDL->renderer, 128, 128, 128, 0);
         break;
     case '8':
-        SDL_SetRenderDrawColor(SDL->renderer, 255, 125, 0, 0);
+        SDL_SetRenderDrawColor(SDL->renderer, 128, 0, 0, 0);
         break;
     case '9':
-        SDL_SetRenderDrawColor(SDL->renderer, 255, 0, 125, 0);
+        SDL_SetRenderDrawColor(SDL->renderer, 255, 128, 0, 0);
         break;
     }
 }

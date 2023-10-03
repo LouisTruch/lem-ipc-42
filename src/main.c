@@ -32,5 +32,5 @@ int main(int argc, char **argv)
     else
         add_player(&ipc);
     start_game(&ipc);
-    return (clean_up_ipcs(&ipc));
+    return (0);
 }

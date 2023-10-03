@@ -2,15 +2,15 @@
 
 for i in {1..3};
 do
-    valgrind ./lemipc 1&
-    valgrind ./lemipc 2&
-    valgrind ./lemipc 3&
-    # ./lemipc 4&i
-    # ./lemipc 5&
-    # ./lemipc 6&
-    # ./lemipc 7&
-    # ./lemipc 8&
-    # ./lemipc 9&
+    ./lemipc 1&
+    ./lemipc 2&
+    ./lemipc 3&
+    ./lemipc 4&
+    ./lemipc 5&
+    ./lemipc 6&
+    ./lemipc 7&
+    ./lemipc 8&
+    ./lemipc 9&
 done
 sleep 0.5
 ./lemipc-visualizer

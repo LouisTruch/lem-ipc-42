@@ -22,8 +22,6 @@ void init_ipcs(t_ipc *ipc)
 int clean_up_ipcs(t_ipc *ipc)
 {
     struct shmid_ds shmid_ds;
-
-    sem_lock(ipc->semid[GAME_MUTEX], LOCK);
     if (get_shmem_stat(ipc->shmid, &shmid_ds) == IPC_ERROR)
     {
         perror("utils.c clean_up_ipcs(): shmctl");
@@ -49,11 +47,6 @@ int clean_up_ipcs(t_ipc *ipc)
         err = SEMCTL_RM_ERROR;
     }
     if (destroy_semaphore(ipc->semid[WAITING_START_MUTEX]) == IPC_ERROR)
-    {
-        perror("semctl rmid");
-        err = SEMCTL_RM_ERROR;
-    }
-    if (destroy_semaphore(ipc->semid[SPECTATE_MUTEX]) == IPC_ERROR)
     {
         perror("semctl rmid");
         err = SEMCTL_RM_ERROR;

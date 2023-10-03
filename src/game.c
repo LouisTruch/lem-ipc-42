@@ -24,12 +24,10 @@ int init_game(t_ipc *ipc)
     return SUCCESS;
 }
 
-static void leave_game(t_game *game, int p_coord[2], int semid)
+static void leave_game(t_game *game, int p_coord[2])
 {
     game->board[CURRENT_TILE] = FREE_TILE;
     shmdt(game);
-    sem_lock(semid, UNLOCK);
-    exit(SUCCESS);
 }
 
 static bool check_player_death(t_player *player, const char *board)
@@ -178,9 +176,9 @@ static void flood_fill(char *c_board)
                 if (line + 1 < BOARD_SIZE && c_board[(line + 1) * BOARD_SIZE + row] == FREE_TILE)
                     c_board[(line + 1) * BOARD_SIZE + row] = 'p';
                 if (row - 1 >= 0 && c_board[line * BOARD_SIZE + row - 1] == FREE_TILE)
-                    c_board[line * BOARD_SIZE + row - 1] = 'p';
+                    c_board[line * BOARD_SIZE + (row - 1)] = 'p';
                 if (row + 1 < BOARD_SIZE && c_board[line * BOARD_SIZE + row + 1] == FREE_TILE)
-                    c_board[line * BOARD_SIZE + row + 1] = 'p';
+                    c_board[line * BOARD_SIZE + (row + 1)] = 'p';
             }
     // Conditionnal jump ??
     for (int i = 0; c_board[i]; i++)
@@ -191,6 +189,8 @@ static void flood_fill(char *c_board)
 static int find_path_length(const char *board, const int p_coord[2], const int t_info[3])
 {
     if (p_coord[LINE] < 0 || p_coord[LINE] >= BOARD_SIZE || p_coord[ROW] < 0 || p_coord[ROW] >= BOARD_SIZE)
+        return NO_PATH;
+    if (board[CURRENT_TILE] != FREE_TILE)
         return NO_PATH;
 
     char c_board[BOARD_SIZE * BOARD_SIZE];
@@ -213,7 +213,6 @@ static int select_path(const char *board, const int p_coord[2], const int t_info
     if (is_around_target(board, p_coord, t_info))
         return CANT_MOVE;
 
-    // Check map limit here
     int path_length[4];
     path_length[UP] = find_path_length(board, (int[2]){p_coord[LINE] - 1, p_coord[ROW]}, t_info);
     path_length[DOWN] = find_path_length(board, (int[2]){p_coord[LINE] + 1, p_coord[ROW]}, t_info);
@@ -260,7 +259,7 @@ void send_board(const int msqid, const char *board)
     ft_memcpy(msg.mtext, board, BOARD_SIZE * BOARD_SIZE);
     if (msgsnd(msqid, &msg, (sizeof(t_msg_spect) - sizeof(long)), 0) == IPC_ERROR)
     {
-        perror("msgsnd");
+        perror("msgsnd sendboard");
     }
 }
 
@@ -272,55 +271,18 @@ void start_game(t_ipc *ipc)
 
     while (1)
     {
-        send_board(ipc->msqid[SPECT], ipc->game->board);
         sem_lock(ipc->semid[GAME_MUTEX], LOCK);
+        send_board(ipc->msqid[SPECT], ipc->game->board);
         recv_msq(ipc->msqid[PLAY], &msg, ipc->player->team);
         if (check_end_conds(ipc))
             break;
-        // sem_lock(ipc->semid[SPECTATE_MUTEX], LOCK);
         set_target(ipc->game->board, ipc->player->coord, msg.mtext);
         int direction = select_path(ipc->game->board, ipc->player->coord, msg.mtext);
         move_player(ipc->game->board, ipc->player->coord, direction);
         usleep(GAME_SPEED);
-        // sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
         send_msq(ipc->msqid[PLAY], &msg);
         sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
     }
-    // ft_printf("Leaving game...\n");
-    leave_game(ipc->game, ipc->player->coord, ipc->semid[GAME_MUTEX]);
-}
-
-static bool board_empty(t_ipc *ipc)
-{
-    for (int i = 0; ipc->game->board[i]; i++)
-    {
-        if (ipc->game->board[i] != FREE_TILE)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-void start_spectating(t_ipc *ipc)
-{
-    while (!ipc->game->started)
-    {
-        sem_lock(ipc->semid[GAME_MUTEX], LOCK);
-        // usleep(GAME_SPEED);
-        sem_lock(ipc->semid[GAME_MUTEX], UNLOCK);
-    }
-    ft_printf("Starting spectator mode\n");
-    while (1)
-    {
-        sem_lock(ipc->semid[SPECTATE_MUTEX], LOCK);
-        if (board_empty(ipc))
-        {
-            ft_printf("Exiting spectator mode\n");
-            sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
-            return;
-        }
-        print_board(ipc->game->board);
-        sem_lock(ipc->semid[SPECTATE_MUTEX], UNLOCK);
-    }
+    leave_game(ipc->game, ipc->player->coord);
+    clean_up_ipcs(ipc);
 }
